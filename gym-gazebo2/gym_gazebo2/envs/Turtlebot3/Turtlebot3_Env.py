@@ -63,14 +63,14 @@ class TurtleBot3Env(gym.Env):
 
         # Create a dictionary to store the names of different worlds, their spawn points, and their corresponding target positions
         world = {}
-        world['room'] = {'spawn_point': [-3.5, 3.0], 'target_position': [2.0, -2.5]}
-        world['four_rooms'] = {'spawn_point': [-5.0, 5.0], 'target_position': [5.0, -4.0]}
         world['turtlebot3_world'] = {'spawn_point': [-1.5, -0.5], 'target_position': [2, 0]}
+        world['turtlebot3_room'] = {'spawn_point': [-3.5, 3.75], 'target_position': [2.0, -2.5]}
         world['turtlebot3_house'] = {'spawn_point': [-6.5, 3.5], 'target_position': [6.5, 1]}
-        
+        #world['four_rooms'] = {'spawn_point': [-5.0, 5.0], 'target_position': [5.0, -4.0]}
+
         #if the env_num is 0 then we choose the first world, else if it is 1 then we choose the second world, etc. if it is 4 then we choose the first world again
-        #world_name = list(world.keys())[env_num % 4]
-        world_name = 'turtlebot3_world'
+        world_name = list(world.keys())[env_num % 3]
+        #world_name = 'turtlebot3_house'
 
         # Pass this selected world to the launch file, so we can select world name and spawn point
         self.worldname = world_name
@@ -231,12 +231,17 @@ class TurtleBot3Env(gym.Env):
                 obs_message = None
                 print("ran into error with scan message, trying again")
 
-        state = obs_message.ranges
+        state = np.asarray(obs_message.ranges)
         #print("initial values in scan were: ", state)
         #print("Length of scan is: ", len(state))
+        # Set the inf values to 5.0 and set any values <= 0.20 to 0.0
         for idx, item in enumerate(state):
             if item == float('inf'):
-                state[idx] = 44
+                state[idx] = 5.0
+            elif item <= 0.20:
+                state[idx] = 0.0
+        #Normailze the values in the state to be between 0 and 1
+        state = state / 5.0
         #print("Adjusted values in scan are: ", state)
         # Empty message after recieving it
         obs_message = None
@@ -266,7 +271,7 @@ class TurtleBot3Env(gym.Env):
         # Detect if there is a collision, return Boolean
 
         #print("Incoming ovbservation is: ", obs)
-        if min(obs) < 0.20:
+        if min(obs) == 0.0:
             print("++++++++++++++++++COLLISION DETECTED+++++++++++++++++++++++")
 
             self.collided += 1
