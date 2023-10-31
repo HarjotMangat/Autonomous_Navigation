@@ -6,7 +6,8 @@ import multiprocessing
 from Config import Config
 
 #@tf.keras.utils.register_keras_serializable(package='NetworkVPKeras', name="loss_function1")
-def loss_function(y_true, y_pred):
+#@tf.function
+def loss_function(y_true, y_pred, beta):
     '''#component of the loss function for value function
     self.cost_v = 0.5 * tf.reduce_sum(tf.square(self.y_r - self.logits_v), axis=0)
         
@@ -28,6 +29,7 @@ def loss_function(y_true, y_pred):
     #computing a total loss for the model, using policy loss and value function loss
     self.cost_all = self.cost_p + self.cost_v'''
 
+    
     #tf.print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
     action_index, Y_r = y_true #action_index is a tensor of shape (batch_size, num_actions), Y_r is a tensor of shape (batch_size, 1)
     #tf.print("action_index is: ", action_index)
@@ -36,14 +38,16 @@ def loss_function(y_true, y_pred):
     #tf.print("policy_output is: ", policy_output)
     #tf.print("value_output is: ", value_output)
     #tf.print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
-    value_loss = 0.5 * tf.math.squared_difference(Y_r, value_output)
-
+    #value_loss = 0.5 * tf.math.squared_difference(Y_r, value_output)
     #policy_loss = -tf.reduce_sum(tf.math.log(policy_output + 1e-10) * action_index, axis=1)
     #total_loss = policy_loss + (0.5 * value_loss) - (0.01 * policy_output)
 
+    value_loss = 0.5 * tf.reduce_sum(tf.square(Y_r - value_output), axis=0)
+
     selected_action_prob = tf.reduce_sum(policy_output * action_index, axis=1) 
     cost_p_1 = tf.math.log(tf.maximum(selected_action_prob, Config.LOG_EPSILON)) * (Y_r - tf.stop_gradient(value_output))
-    cost_p_2 = -1 * Config.BETA_START * tf.reduce_sum(tf.math.log(tf.maximum(policy_output, Config.LOG_EPSILON)) * policy_output, axis=1)
+    #cost_p_2 = -1 * Config.BETA_START * tf.reduce_sum(tf.math.log(tf.maximum(policy_output, Config.LOG_EPSILON)) * policy_output, axis=1)
+    cost_p_2 = -1 * beta * tf.reduce_sum(tf.math.log(tf.maximum(policy_output, Config.LOG_EPSILON)) * policy_output, axis=1)
 
     cost_p_1_agg = tf.reduce_sum(cost_p_1, axis=0)
     cost_p_2_agg = tf.reduce_sum(cost_p_2, axis=0)
@@ -66,7 +70,7 @@ class NetworkVPKeras:
         self.device = device
         self.model_name = model_name
         self.num_actions = num_actions
-        self.lock = multiprocessing.Lock()
+        #self.lock = multiprocessing.Lock()
 
         self.observation_size = Config.OBSERVATION_SIZE
         self.rotation_size = Config.OBSERVATION_ROTATION_SIZE
@@ -74,7 +78,7 @@ class NetworkVPKeras:
         self.observation_channels = Config.STACKED_FRAMES
 
         self.learning_rate = Config.LEARNING_RATE_START
-        self.beta = Config.BETA_START
+        self.beta = tf.Variable(Config.BETA_START)
         self.log_epsilon = Config.LOG_EPSILON
 
         if Config.LOAD_CHECKPOINT:
@@ -123,23 +127,19 @@ class NetworkVPKeras:
         tf.print("**********************************************")
         tf.print("model training phase with trainer: ", trainer_id)
         #print("model training phase with trainer: ", trainer_id)
-        #print(x)
         tf.print("Shape of x is: ", x.shape)
-        #print(y_r)
         #print("Shape of y_r is: ", y_r.shape)
-        #print(a)
         #print("Shape of a is: ", a.shape)
         
         #if we use self.model.fit() we should pass in a tuple of lists ([x], [policy_layer, Q_value_layer]) https://keras.io/guides/functional_api/
         with tf.GradientTape() as tape:
-
             #forward pass
             logits = self.model(x, training=True)
 
             #loss_value for batch
             #tf.print("y_true is: \n", y_true) #y_true is [actions (batch_size, num_actions), rewards (batch_size, 1)]
             #tf.print("logits are: \n", logits) #logits is [policy_layer (batch_size, num_actions), Q_value_layer (batch_size, 1)]
-            loss_value = loss_function(y_true, logits) #loss_value is a tensor of shape (batch_size, batch_size)
+            loss_value = loss_function(y_true, logits, self.beta) #loss_value is a tensor of shape (batch_size)
             tf.print("loss during training was calculated as: \n", loss_value, loss_value.shape)
 
         gradients = tape.gradient(loss_value, self.model.trainable_weights)

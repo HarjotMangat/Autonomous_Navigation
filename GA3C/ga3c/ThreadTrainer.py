@@ -48,7 +48,6 @@ class ThreadTrainer(Thread):
                 if batch_size == 0:
                     x__ = x_; r__ = r_; a__ = a_
                 else:
-                    print("+++++++++++GOT A BATCH LARGER THAN 0++++++++++++++")
                     x__ = np.concatenate((x__, x_))
                     r__ = np.concatenate((r__, r_))
                     a__ = np.concatenate((a__, a_))
