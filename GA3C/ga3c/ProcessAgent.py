@@ -64,7 +64,8 @@ class ProcessAgent(Process):
     @staticmethod
     def _accumulate_rewards(experiences, discount_factor, terminal_reward):
         reward_sum = terminal_reward
-        for t in reversed(range(0, len(experiences)-1)):
+        print("Accumulating rewards ", reward_sum)
+        for t in reversed(range(0, len(experiences))):
             r = np.clip(experiences[t].reward, Config.REWARD_MIN, Config.REWARD_MAX)
             reward_sum = discount_factor * reward_sum + r
             experiences[t].reward = reward_sum
@@ -95,10 +96,9 @@ class ProcessAgent(Process):
         if Config.PLAY_MODE:
             action = np.argmax(prediction)
         else:
-            #print("Prediction is: ", prediction)
             prediction = np.asarray(prediction).astype('float64')   #normalizing prediction, was originally causing: ValueError: probabilities do not sum to 1
             prediction = prediction / np.sum(prediction)            #because of sum being equal to 1.000000000000xx or 0.9999999999999999xx
-            action = np.random.choice(self.actions, p=prediction) 
+            action = np.random.choice(self.actions, p=prediction)
         return action
 
     def run_episode(self, env):
@@ -169,7 +169,7 @@ class ProcessAgent(Process):
             total_length = 0
             for x_, r_, a_, reward_sum in self.run_episode(env):
                 total_reward += reward_sum
-                total_length += len(r_) + 1  # +1 for last frame that we drop
+                total_length += len(r_) #+ 1  # +1 for last frame that we drop
                 self.training_q.put((x_, r_, a_))
             self.episode_log_q.put((datetime.now(), total_reward, total_length))
 

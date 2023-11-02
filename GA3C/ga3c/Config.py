@@ -78,11 +78,11 @@ class Config:
     DISCOUNT = 0.99
     
     # Tmax
-    TIME_MAX = 5
+    TIME_MAX = 10 #5
     
     # Reward Clipping
-    REWARD_MIN = -20
-    REWARD_MAX = 20
+    REWARD_MIN = -20 #-20
+    REWARD_MAX = 20 #20
 
     # Max size of the queue
     MAX_QUEUE_SIZE = 100
@@ -101,8 +101,8 @@ class Config:
     BETA_END = 0.01
 
     # Learning rate
-    LEARNING_RATE_START = 0.0003
-    LEARNING_RATE_END = 0.0003
+    LEARNING_RATE_START = 0.0003 #0.0003
+    LEARNING_RATE_END = 0.0003 #0.0003
 
     # RMSProp parameters
     RMSPROP_DECAY = 0.99
@@ -118,7 +118,7 @@ class Config:
     # Epsilon (regularize policy lag in GA3C)
     LOG_EPSILON = 1e-6
     # Training min batch size - increasing the batch size increases the stability of the algorithm, but make learning slower
-    TRAINING_MIN_BATCH_SIZE = 0
+    TRAINING_MIN_BATCH_SIZE = 16 #0
     
     #########################################################################
     # Log and save
