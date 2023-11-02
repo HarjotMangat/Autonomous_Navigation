@@ -96,7 +96,7 @@ class TurtleBot3_Node(Node):
         else:
             raise AttributeError("Invalid Action: ", action)
         
-        print(self.env_id, " Action published: ", action)
+        #print(self.env_id, " Action published: ", action)
 
     def pause_sim(self):
 

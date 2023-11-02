@@ -63,14 +63,15 @@ class TurtleBot3Env(gym.Env):
 
         # Create a dictionary to store the names of different worlds, their spawn points, and their corresponding target positions
         world = {}
-        world['turtlebot3_world'] = {'spawn_point': [-1.5, -0.5], 'target_position': [2, 0]}
+        
         world['turtlebot3_room'] = {'spawn_point': [-3.5, 3.75], 'target_position': [2.0, -2.5]}
         world['turtlebot3_house'] = {'spawn_point': [-6.5, 3.5], 'target_position': [6.5, 1]}
+        world['turtlebot3_world'] = {'spawn_point': [-1.5, -0.5], 'target_position': [2, 0]}
         #world['four_rooms'] = {'spawn_point': [-5.0, 5.0], 'target_position': [5.0, -4.0]}
 
-        #if the env_num is 0 then we choose the first world, else if it is 1 then we choose the second world, etc. if it is 4 then we choose the first world again
-        world_name = list(world.keys())[env_num % 3]
-        #world_name = 'turtlebot3_house'
+        #choose the world_name based on env_num
+        #world_name = list(world.keys())[env_num % 3]
+        world_name = 'turtlebot3_room'
 
         # Pass this selected world to the launch file, so we can select world name and spawn point
         self.worldname = world_name
@@ -87,19 +88,10 @@ class TurtleBot3Env(gym.Env):
         if not rclpy.ok():
            rclpy.init()
 
-        #rclypy.node --> class inherit from that. seperate turtlebot3evn from ros node stuff.
-        #self.node = rclpy.create_node(self.__class__.__name__ + str(env_num))
-
         self.node = TurtleBot3_Node(env_id=env_num)
         #########################################################################
 
-        #self.gzreset = Gazebo_Reset_Node()
-        #self.gzpause = Gazebo_Pause_Node()
-        #self.gzresume = Gazebo_Resume_Node()
-
         # class variables
-        #self._observation_msg = None
-        #self._position_msg = None
 
         self.id = env_num
         self.Position = None
@@ -115,25 +107,9 @@ class TurtleBot3Env(gym.Env):
         #   Environment hyperparams
         #############################
         # Target, where should the agent reach
-        #self.targetPosition= np.asarray([2,0])
         self.targetPosition = np.asarray(world[world_name]['target_position'])
 
-        #self.target_orientation = np.asarray([0., 0.7071068, 0.7071068, 0.]) # arrow looking down [w, x, y, z]
-        #self.target_orientation = np.asarray([-0.4958324, 0.5041332, 0.5041331, -0.4958324]) # arrow looking opposite to MARA [w, x, y, z]
-
         #############################
-        '''
-        # Subscribe to the appropriate topics, taking into account the particular robot
-        #self.vel_pub = self.node.create_publisher(Twist, '/cmd_vel', qos_profile=qos_profile_services_default)
-        #self.pause = self.node.create_client(Empty, '/pause_physics')
-        #self.resume = self.node.create_client(Empty, '/unpause_physics')
-        #self._sub_scan = self.node.create_subscription(LaserScan, '/scan', self.observation_callback, qos_profile=qos_profile_sensor_data)
-        #self._sub_scan = self.node.create_subscription(LaserScan, '/scan', self.observation_callback, qos_profile=qos_profile_services_default)
-        #self._sub_coll = self.node.create_subscription(ContactState, '/gazebo_contacts', self.collision_callback, qos_profile=qos_profile_sensor_data)
-        #self.reset_sim = self.node.create_client(Empty, '/reset_simulation')
-        # Need to subscribe to a gazebo service for model_states to get waffle_depth position (x,y,z) to help determine rewards in step() and get orientation (quaternion [x y z w])
-        #self._sub_position = self.node.create_subscription(ModelStates, '/gazebo/model_states', self.position_callback, qos_profile=qos_profile_sensor_data)
-        '''
 
         #Esablish action space and observation space
         self.action_space = spaces.Discrete(7)
@@ -147,28 +123,6 @@ class TurtleBot3Env(gym.Env):
         self.buffer_dist_rewards = []
         self.buffer_tot_rewards = []
         self.collided = 0
-
-    '''def observation_callback(self, message):
-        """
-        Callback method for the subscriber of '/Scan' topic
-        """
-        self._observation_msg = message
-    
-    def position_callback(self, message):
-        """
-        Callback method for the subscriber of '/gazebo/model_states' topic
-        """
-        index = message.name.index('waffle_depth')
-        pose = message.pose[index]
-        position = pose.position
-
-        #this orientation is in quaternarion form, need the yaw for degrees to goal
-        orientation = pose.orientation
-
-        self._position_msg = position
-        self._orientation_msg = orientation
-        #self._position_msg = message
-    '''
     
     def set_episode_size(self, episode_size):
         self.max_episode_steps = episode_size
@@ -190,11 +144,9 @@ class TurtleBot3Env(gym.Env):
 
         yaw = math.atan2(2 * (w * z + x * y), 1 - 2 * (y ** 2 + z ** 2))
         robot_world_yaw = math.degrees(yaw)
-        #print("Robot to world Yaw in degrees is: ", robot_world_yaw)
         
         # Get the angle from the robot to the goal
         robot_goal_calc = math.atan2(self.targetPosition[1] - position.y, self.targetPosition[0] - position.x)
-        #print("Angle between robot and goal position in degrees is: ", math.degrees(robot_goal_calc))
         robot_goal_angle = math.degrees(robot_goal_calc)
 
         # Get the difference between the two angles (robot_world_yaw & robot_goal_angle) to determine how much the robot should rotate to face goal
@@ -232,8 +184,7 @@ class TurtleBot3Env(gym.Env):
                 print("ran into error with scan message, trying again")
 
         state = np.asarray(obs_message.ranges)
-        #print("initial values in scan were: ", state)
-        #print("Length of scan is: ", len(state))
+
         # Set the inf values to 5.0 and set any values <= 0.20 to 0.0
         for idx, item in enumerate(state):
             if item == float('inf'):
@@ -242,7 +193,6 @@ class TurtleBot3Env(gym.Env):
                 state[idx] = 0.0
         #Normailze the values in the state to be between 0 and 1
         state = state / 5.0
-        #print("Adjusted values in scan are: ", state)
         # Empty message after recieving it
         obs_message = None
         return state
@@ -385,17 +335,15 @@ class TurtleBot3Env(gym.Env):
         if self.Position is None:
             self.Position = self.node.positiion_msg
 
-        # Resume simulation to take an action
-        self.node.resume_sim()
-        #self.gzresume.resume_sim()
-
         # Execute "action"
         self.node.action_publish(action)
 
-        time.sleep(0.2)
+        # Resume simulation to take an action
+        self.node.resume_sim()
+
+        time.sleep(0.25)
 
         # Pause simulation
-        #self.gzpause.pause_sim()
         self.node.pause_sim()
 
         #Take current position of robot
@@ -425,8 +373,6 @@ class TurtleBot3Env(gym.Env):
 
         #concatenate the one-hot encoding to the observation
         obs = np.concatenate((obs, encoding), axis=None)
-        #print("The new concatenated observation is: ",obs)
-        #print("The shape of the observation is: ", obs.shape)
 
         self.previousDistance = self.currentDistance
         self.prevPosition = self.Position
@@ -456,7 +402,6 @@ class TurtleBot3Env(gym.Env):
         """
         self.iterator = 0
         # reset simulation
-        #self.gzreset.reset_sim()
         self.node.reset_sim()
 
         print("+++++++++++++++++++ ", self.id ," Reset successfully++++++++++++++++++++")
@@ -469,6 +414,11 @@ class TurtleBot3Env(gym.Env):
         #Take current position of robot
         self.Position, self.Orientation = self.take_position()
         robot_to_goal_orientation = self.get_orientation(self.Orientation, self.Position)
+
+        #Reset prevOrientation, prevPosition, prevDistance
+        self.prevOrientation = None
+        self.prevPosition = None
+        self.previousDistance = 1000
 
         # Take an observation
         obs = self.take_observation()
