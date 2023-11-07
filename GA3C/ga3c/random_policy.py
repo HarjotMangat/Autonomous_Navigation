@@ -38,14 +38,15 @@ class Experience:
         self.reward = reward
         self.done = done
 
-class TestProcessAgent(Process):
-    def __init__(self, id):
-        super(TestProcessAgent, self).__init__()
+#class TestProcessAgent(Process):
+#    def __init__(self, id):
+#        super(TestProcessAgent, self).__init__()
         #if not rclpy.ok():
         #    rclpy.init()
 
         #self.turtlenode = TurtleBot3_Node(env_id=1)
-
+class TestProcessAgent():
+    def __init__(self, id):
         self.id = id
         self.exit_flag = 0
         #self.env = gym.make('TurtleBot3Lidar-v0', env_num=1)
@@ -78,13 +79,14 @@ class TestProcessAgent(Process):
 
 
     def select_action(self, env):
-        if self.id == 0:
-            action = 3
-        elif self.id == 1:
-            action = 6
-        else:
-            action = 0
+        #if self.id == 0:
+        #    action = 3
+        #elif self.id == 1:
+        #    action = 6
+        #else:
+        #    action = 0
         #action = env.action_space.sample()
+        action = int(input("Enter Action for this step "))
         return action
 
     def run_episode(self, env):
@@ -116,6 +118,7 @@ class TestProcessAgent(Process):
             action = self.select_action(env)
             next_state,reward, done, _ = env.step(action)
             time.sleep(0.5)
+            print("reward was: ", reward)
             reward_sum += reward
             exp = Experience(self.state, action, reward, done)
             experiences.append(exp)
@@ -161,14 +164,15 @@ class TestProcessAgent(Process):
         env.close()
 
 if __name__ == '__main__':
-    p = TestProcessAgent(id=0)
-    p1 = TestProcessAgent(id=1)
+    #p = TestProcessAgent(id=0)
+    #p1 = TestProcessAgent(id=1)
     #p2 = TestProcessAgent(id=2)
-    p.start()
-    time.sleep(10)
-    p1.start()
+    #p.start()
+    #time.sleep(10)
+    #p1.start()
     #time.sleep(15)
     #p2.start()
-    p.join()
-    p1.join()
+    #p.join()
+    #p1.join()
     #p2.join()
+    TestProcessAgent(id=1).run()
