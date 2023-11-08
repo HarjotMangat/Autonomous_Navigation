@@ -1,5 +1,14 @@
 # GA3C: Reinforcement Learning through Asynchronous Advantage Actor-Critic on a GPU
 
+Added an updated Tensorflow2 model using Keras for the network architecture.
+Adjusted configs and other small pieces of code to resemble the implementation of the paper
+
+---------------------------------------------------------------------------------------------
+
+Original README below
+
+---------------------------------------------------------------------------------------------
+
 A hybrid CPU/GPU version of the Asynchronous Advantage Actor-Critic (A3C) algorithm, currently the state-of-the-art method in reinforcement learning for various gaming tasks. This CPU/GPU implementation, based on TensorFlow, achieves a significant speed up compared to a similar CPU implementation.
 
 ## How do I get set up? ###
