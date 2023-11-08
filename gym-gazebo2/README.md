@@ -1,5 +1,14 @@
 # gym-gazebo2
 
+Added a new environment for the Turtlebot3 model in gym-gazebo2/envs/turtlebot3. 
+
+Added a ROS2 Node for controlling the model in gazebo.
+
+ ------------------------------------------------------------------------------------------------
+ Original README below
+ 
+ ------------------------------------------------------------------------------------------------
+
 <a href="http://www.acutronicrobotics.com"><img src="/imgs/alr_logo.png" align="left" width="190"></a>
 
 **gym-gazebo2 is a toolkit for developing and comparing reinforcement learning algorithms using ROS 2 and Gazebo**. Built as an extension of [gym-gazebo](https://github.com/AcutronicRobotics/gym-gazebo/tree/dashing), gym-gazebo2 has been redesigned with community feedback and adopts now a standalone architecture while mantaining the core concepts of previous work inspired originally by the OpenAI gym.
