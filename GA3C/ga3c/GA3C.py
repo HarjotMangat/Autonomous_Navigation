@@ -35,6 +35,7 @@ if sys.version_info < (3,0):
 from Config import Config
 from Server import Server
 import multiprocessing
+import tensorflow as tf
 
 # Parse arguments
 for i in range(1, len(sys.argv)):
@@ -56,9 +57,17 @@ if Config.PLAY_MODE:
     Config.SAVE_MODELS = False
 
 #gym.undo_logger_setup()
-
+physical_devices = tf.config.list_physical_devices('GPU')
+try:
+    tf.config.experimental.set_memory_growth(physical_devices[0], True)
+    #print("worked")
+except:
+    #print("didn't work")
+    #Invalid device or cannot modify virtual devices once initialized.
+    pass
 # Start main program
 print("Starting main program")
 if __name__ == '__main__':
+    
     multiprocessing.set_start_method('spawn', force=True)
     Server().main()
