@@ -27,6 +27,7 @@
 # check python version; warn if not Python3
 import sys
 import warnings
+import tensorflow as tf
 if sys.version_info < (3,0):
     warnings.warn("Optimized for Python3. Performance may suffer under Python2.", Warning)
 
@@ -35,7 +36,6 @@ if sys.version_info < (3,0):
 from Config import Config
 from Server import Server
 import multiprocessing
-import tensorflow as tf
 
 # Parse arguments
 for i in range(1, len(sys.argv)):
@@ -60,14 +60,11 @@ if Config.PLAY_MODE:
 physical_devices = tf.config.list_physical_devices('GPU')
 try:
     tf.config.experimental.set_memory_growth(physical_devices[0], True)
-    #print("worked")
 except:
-    #print("didn't work")
-    #Invalid device or cannot modify virtual devices once initialized.
+    # Invalid device or cannot modify virtual devices once initialized.
     pass
 # Start main program
-print("Starting main program")
 if __name__ == '__main__':
-    
+
     multiprocessing.set_start_method('spawn', force=True)
     Server().main()

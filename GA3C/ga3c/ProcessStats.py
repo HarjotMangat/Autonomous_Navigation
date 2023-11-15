@@ -51,6 +51,9 @@ class ProcessStats(Process):
         self.agent_count = Value('i', 0)
         self.total_frame_count = 0
 
+        self.policy_value = Value('d', 0.0)
+        self.best_policy_value = Value('d', 0.0)
+
     def FPS(self):
         # average FPS from the beginning of the training (not current FPS)
         return np.ceil(self.total_frame_count / (time.time() - self.start_time))
@@ -65,6 +68,10 @@ class ProcessStats(Process):
             rolling_frame_count = 0
             rolling_reward = 0
             results_q = queueQueue(maxsize=Config.STAT_ROLLING_MEAN_WINDOW)
+
+            policy_rolling_reward = 0
+            policy_q = queueQueue(maxsize=50)
+            best_policy_update_time = 0
             
             self.start_time = time.time()
             first_time = datetime.now()
@@ -79,6 +86,13 @@ class ProcessStats(Process):
                 rolling_frame_count += length
                 rolling_reward += reward
 
+                policy_rolling_reward += reward
+
+                if policy_q.full():
+                    old_policy_reward = policy_q.get()
+                    policy_rolling_reward -= old_policy_reward
+                policy_q.put(reward)
+
                 if results_q.full():
                     old_episode_time, old_reward, old_length = results_q.get()
                     rolling_frame_count -= old_length
@@ -86,6 +100,17 @@ class ProcessStats(Process):
                     first_time = old_episode_time
 
                 results_q.put((episode_time, reward, length))
+
+                best_policy_update_time += 1
+                if policy_q.full():
+                    policy_performance = policy_rolling_reward / policy_q.qsize()
+                    self.policy_value.value = policy_performance
+                    if policy_performance > self.best_policy_value.value:
+                        self.best_policy_value.value = policy_performance
+                        print(f"Saving new best policy with performance: {policy_performance}")
+                        print(f"Episodes since last best policy update: {best_policy_update_time}")
+                        best_policy_update_time = 0
+                        self.should_save_model.value = 1
 
                 if self.episode_count.value % Config.SAVE_FREQUENCY == 0:
                     self.should_save_model.value = 1
@@ -104,3 +129,4 @@ class ProcessStats(Process):
                            self.FPS(), self.TPS(),
                            self.trainer_count.value, self.predictor_count.value, self.agent_count.value))
                     sys.stdout.flush()
+                    print(f"[Policy performance: {policy_rolling_reward / policy_q.qsize()}]")

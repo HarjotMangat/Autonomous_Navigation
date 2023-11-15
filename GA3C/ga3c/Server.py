@@ -32,6 +32,7 @@ import time
 from Config import Config
 #from Environment import Environment
 from NetworkKeras import NetworkVPKeras
+#from NetworkVPTF2 import NetworkVP
 from ProcessAgent import ProcessAgent
 from ProcessStats import ProcessStats
 from ThreadDynamicAdjustment import ThreadDynamicAdjustment
@@ -46,11 +47,12 @@ class Server:
         self.training_q = Queue(maxsize=Config.MAX_QUEUE_SIZE)
         self.prediction_q = Queue(maxsize=Config.MAX_QUEUE_SIZE)
 
-        #self.model = NetworkVP(Config.DEVICE, Config.NETWORK_NAME, Environment().get_num_actions())
+        #self.model = NetworkVP(Config.DEVICE, Config.NETWORK_NAME, Config.ACTION_SPACE)
         self.model = NetworkVPKeras(Config.DEVICE, Config.NETWORK_NAME, Config.ACTION_SPACE)
         if Config.LOAD_CHECKPOINT:
             #self.stats.episode_count.value = self.model.load()
             self.stats.episode_count.value = Config.LOAD_EPISODE
+            self.stats.best_policy_value.value = Config.LOAD_POLICY_VALUE
 
         self.training_step = 0
         self.frame_counter = 0
@@ -99,11 +101,11 @@ class Server:
         self.stats.training_count.value += 1
         self.dynamic_adjustment.temporal_training_count += 1
 
-        if Config.TENSORBOARD and self.stats.training_count.value % Config.TENSORBOARD_UPDATE_FREQUENCY == 0:
-            self.model.log(x_, r_, a_)
+        #if Config.TENSORBOARD and self.stats.training_count.value % Config.TENSORBOARD_UPDATE_FREQUENCY == 0:
+        #    self.model.log(x_, r_, a_)
 
     def save_model(self):
-        self.model.save(self.stats.episode_count.value)
+        self.model.save(episode=self.stats.episode_count.value, policy_value=self.stats.policy_value.value)
 
     def main(self):
         self.stats.start()
@@ -120,7 +122,7 @@ class Server:
         while self.stats.episode_count.value < Config.EPISODES:
             step = min(self.stats.episode_count.value, Config.ANNEALING_EPISODE_COUNT - 1)
             self.model.learning_rate = Config.LEARNING_RATE_START + learning_rate_multiplier * step
-            self.model.beta = Config.BETA_START + beta_multiplier * step
+            self.model.beta = tf.Variable(Config.BETA_START + beta_multiplier * step,dtype=tf.float32)
 
             # Saving is async - even if we start saving at a given episode, we may save the model at a later episode
             if Config.SAVE_MODELS and self.stats.should_save_model.value > 0:

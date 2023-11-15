@@ -1,6 +1,7 @@
 import numpy as np
 import tensorflow as tf
 import os
+import re
 import multiprocessing
 
 from Config import Config
@@ -71,7 +72,7 @@ class NetworkVPKeras:
         self.observation_channels = Config.STACKED_FRAMES
 
         self.learning_rate = Config.LEARNING_RATE_START
-        self.beta = tf.Variable(Config.BETA_START)
+        self.beta = tf.Variable(Config.BETA_START,dtype=tf.float32)
         self.log_epsilon = Config.LOG_EPSILON
 
         if Config.LOAD_CHECKPOINT:
@@ -145,25 +146,41 @@ class NetworkVPKeras:
 
         return self.model(x, training=False)
 
-    def _checkpoint_filename(self, episode):
-        return 'checkpoints/%s_%08d.keras' % (self.model_name, episode)
+    def _checkpoint_filename(self, episode, policy_value):
+        return 'checkpoints/%s_%08d_%04d.keras' % (self.model_name, episode, policy_value)
     
-    def save(self, episode):
+    def save(self, episode, policy_value):
         #self.saver.save(self.sess, self._checkpoint_filename(episode))
-        tf.keras.models.save_model(model=self.model, filepath=self._checkpoint_filename(episode=episode))
+        tf.keras.models.save_model(model=self.model, filepath=self._checkpoint_filename(episode=episode, policy_value=policy_value))
 
     def load(self):
         print("Loading model now")
-        filename = (os.path.dirname(self._checkpoint_filename(episode=0)))
-        if Config.LOAD_EPISODE > 0:
-            filename = self._checkpoint_filename(Config.LOAD_EPISODE)
+        filename = ''
+
+        if Config.LOAD_EPISODE == 0:
+            episode = '00000000'
+            for file in os.listdir('checkpoints'):
+                if file.endswith('.keras'):
+                    model, ep, val = file.split('_')
+                    val, extension = val.split('.')
+                    if ep > episode:
+                        episode = ep
+                        value = val
+            filename = self._checkpoint_filename(episode=int(episode), policy_value=int(value))
+        else:   #if Config.LOAD_EPISODE > 0
+            for file in os.listdir('checkpoints'):
+                if file.endswith('.keras'):
+                    model, ep, val = file.split('_')        
+                    val, extension = val.split('.')
+                    if int(ep) == Config.LOAD_EPISODE:
+                        filename = self._checkpoint_filename(episode=Config.LOAD_EPISODE, policy_value=int(val))
+            #filename = self._checkpoint_filename(Config.LOAD_EPISODE)
         print("filename is: ", filename)
+        Config.LOAD_EPISODE = int(re.findall(r'\d+', filename)[0])
+        Config.LOAD_POLICY_VALUE = float(re.findall(r'\d+', filename)[1])
         custom_objects = {"loss_function": loss_function}
 
         with tf.keras.saving.custom_object_scope(custom_objects):
             loaded_model = tf.keras.models.load_model(filepath=filename)
 
-        #loaded_model = tf.keras.models.load_model(filename)
-        #self.saver.restore(self.sess, filename)
-        #return self._get_episode_from_filename(filename)
         return loaded_model
