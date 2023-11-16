@@ -64,16 +64,19 @@ class TurtleBot3Env(gym.Env):
         # Create a dictionary to store the names of different worlds, their spawn points, and their corresponding target positions
         world = {}
         
-        world['turtlebot3_room'] = {'spawn_point': [-3.5, 3.75], 'target_position': [2.0, -2.5]}
-        #world['turtlebot3_house'] = {'spawn_point': [-6.5, 3.5], 'target_position': [6.5, 1]} # hard goal (cross the whole house)
+        world['turtlebot3_room'] = {'spawn_point': [[-3.5, 3.75], [-3.5,-3.75], [-3.0,1.0]], 
+                                    'target_position': [[2.0,3.75], [2.0, -3.75], [0.5,-1.0]]}
+        
         world['turtlebot3_house'] = {'spawn_point': [[-7.0, 4.0], [-7.0, 0.0], [-4.5, 4.0], [2.0, 0.45],[0.5, 4.5]], 
                                      'target_position': [[-6.0, 2.0], [-6.5, -3.0],[-1.0, 3.5],[6.5, 1.0],[3.5, 4.5]]} # pairs of easier goals
+        
+        #world['turtlebot3_house'] = {'spawn_point': [-6.5, 3.5], 'target_position': [6.5, 1]} # hard goal (cross the whole house)
         #world['turtlebot3_world'] = {'spawn_point': [-1.5, -0.5], 'target_position': [2, 0]} # might have been too consfusing for the agent.
         #world['four_rooms'] = {'spawn_point': [-5.0, 5.0], 'target_position': [5.0, -4.0]} 
 
         #choose the world_name based on env_num
-        #world_name = list(world.keys())[env_num % 3]
-        world_name = 'turtlebot3_house'
+        world_name = list(world.keys())[env_num % 2]
+        #world_name = 'turtlebot3_house'
 
         # Pass this selected world to the launch file, so we can select world name and spawn point
         self.worldname = world_name
@@ -191,14 +194,14 @@ class TurtleBot3Env(gym.Env):
 
         state = np.asarray(obs_message.ranges)
 
-        # Set the inf values to 5.0 and set any values <= 0.20 to 0.0
+        # Set the inf values to 20.0 and set any values <= 0.20 to 0.0
         for idx, item in enumerate(state):
             if item == float('inf'):
-                state[idx] = 5.0
+                state[idx] = 20.0
             elif item <= 0.20:
                 state[idx] = 0.0
         #Normailze the values in the state to be between 0 and 1
-        state = state / 5.0
+        state = state / 20.0
         # Empty message after recieving it
         obs_message = None
         return state
