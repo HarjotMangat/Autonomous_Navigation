@@ -64,3 +64,6 @@ class GameManager:
     
     #def checkcollision(self):
     #    return self.game_env.collision((1,2,3,4))
+
+    def close(self):
+        self.game_env.close()

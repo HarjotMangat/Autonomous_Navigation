@@ -53,6 +53,7 @@ class ProcessStats(Process):
 
         self.policy_value = Value('d', 0.0)
         self.best_policy_value = Value('d', 0.0)
+        self.end_training_value = Value('i', 0)
 
     def FPS(self):
         # average FPS from the beginning of the training (not current FPS)
@@ -111,6 +112,11 @@ class ProcessStats(Process):
                         print(f"Episodes since last best policy update: {best_policy_update_time}")
                         best_policy_update_time = 0
                         self.should_save_model.value = 1
+
+                if not Config.PLAY_MODE:
+                    if best_policy_update_time > Config.STALE_TIME:
+                        print(f"No improvement in policy performance for {Config.STALE_TIME} episodes. Ending training...")
+                        self.end_training_value.value = 1
 
                 if self.episode_count.value % Config.SAVE_FREQUENCY == 0:
                     self.should_save_model.value = 1

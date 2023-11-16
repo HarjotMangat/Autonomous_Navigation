@@ -173,4 +173,4 @@ class ProcessAgent(Process):
                 self.training_q.put((x_, r_, a_))
             self.episode_log_q.put((datetime.now(), total_reward, total_length))
 
-        print("Agent exited loop, exif_flag set to true?")
+        env.close()

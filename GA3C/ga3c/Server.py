@@ -119,7 +119,7 @@ class Server:
                                        Config.LEARNING_RATE_END - Config.LEARNING_RATE_START) / Config.ANNEALING_EPISODE_COUNT
         beta_multiplier = (Config.BETA_END - Config.BETA_START) / Config.ANNEALING_EPISODE_COUNT
 
-        while self.stats.episode_count.value < Config.EPISODES:
+        while self.stats.episode_count.value < Config.EPISODES and not self.stats.end_training_value.value:
             step = min(self.stats.episode_count.value, Config.ANNEALING_EPISODE_COUNT - 1)
             self.model.learning_rate = Config.LEARNING_RATE_START + learning_rate_multiplier * step
             self.model.beta = tf.Variable(Config.BETA_START + beta_multiplier * step,dtype=tf.float32)

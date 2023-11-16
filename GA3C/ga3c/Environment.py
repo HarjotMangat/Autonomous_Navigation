@@ -104,3 +104,6 @@ class Environment:
         self.previous_state = self.current_state
         self.current_state = self._get_current_state()
         return reward, done
+
+    def close(self):
+        self.game.close()

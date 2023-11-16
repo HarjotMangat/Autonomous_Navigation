@@ -48,6 +48,8 @@ class Config:
     LOAD_EPISODE = 0
 
     LOAD_POLICY_VALUE = 0.0
+    # Set number of episodes to continue training from last best policy. End training if this value is exceeded due to stale policy
+    STALE_TIME = 1000
     # Enable to render the game
     RENDER = False
 
