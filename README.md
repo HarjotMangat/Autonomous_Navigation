@@ -48,7 +48,7 @@ There are two options for the base OS: Windows using WSL2 or Ubuntu 22.04
     </details>
 
     <details>
-      <summary>Ubunutu</summary>
+      <summary>Ubuntu</summary>
       <br>
  
       * Get GPU drivers for Ubuntu
