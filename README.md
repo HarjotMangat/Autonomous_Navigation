@@ -122,6 +122,6 @@ There are two options for the base OS: Windows using WSL2 or Ubuntu 22.04
         
         Add source to shell startup script:
         
-        `echo "source ~/turtlebot3_ws/" >> ~/.bashrc`
+        `echo "source ~/turtlebot3_ws/install/setup.bash" >> ~/.bashrc`
         
         `echo “export TURTLEBOT3_MODEL=waffle_depth” >> ~/.bashrc`
