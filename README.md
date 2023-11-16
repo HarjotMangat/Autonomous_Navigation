@@ -61,6 +61,8 @@ There are two options for the base OS: Windows using WSL2 or Ubuntu 22.04
         `pip install tensorflow[and-cuda]`
  
         Verify the install with: `python3 -c "import tensorflow as tf; print(tf.config.list_physical_devices('GPU'))"`
+
+        If there are issues with initializing inference during training. Install the cuda toolkit: `sudo apt install nvidia-cuda-toolkit`
       
     </details>
     
