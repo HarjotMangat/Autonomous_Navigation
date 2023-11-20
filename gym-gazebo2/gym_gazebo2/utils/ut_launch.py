@@ -200,11 +200,11 @@ def generateLaunchDescriptionTurtlebot3(gzclient, multiInstance, port, worldname
             'worlds',
             'turtlebot3_house.world'
         )
-    elif worldname == 'room':
+    elif worldname == 'turtlebot3_room':
         world = os.path.join(
             get_package_share_directory('turtlebot3_gazebo'),
             'worlds',
-            'room.world'
+            'turtlebot3_room.world'
         )
     elif worldname == 'four_rooms':
         world = os.path.join(
