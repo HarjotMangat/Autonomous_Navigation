@@ -74,8 +74,8 @@ class TurtleBot3Env(gym.Env):
         #world['turtlebot3_world'] = {'spawn_point': [-1.5, -0.5], 'target_position': [2, 0]} # might have been too consfusing for the agent.
         #world['four_rooms'] = {'spawn_point': [-5.0, 5.0], 'target_position': [5.0, -4.0]} 
 
-        #choose the world_name based on env_num
-        world_name = list(world.keys())[env_num % 2]
+        #choose the world_name randomly
+        world_name = list(world.keys())[np.random.randint(0,len(world.keys()))]
         #world_name = 'turtlebot3_house'
 
         # Pass this selected world to the launch file, so we can select world name and spawn point
