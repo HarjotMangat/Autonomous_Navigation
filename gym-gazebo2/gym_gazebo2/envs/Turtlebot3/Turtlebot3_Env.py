@@ -8,37 +8,12 @@ from scipy.stats import skew
 from gym import utils, spaces
 from gym_gazebo2.utils import ut_generic, ut_launch #, ut_mara, ut_math, ut_gazebo, tree_urdf, general_utils
 from gym.utils import seeding
-from gazebo_msgs.msg import ModelStates
-
-#import copy
 
 import os
-#import signal
-#import sys
-#from gazebo_msgs.srv import SpawnEntity
-#import subprocess
-#import argparse
-#import transforms3d as tf3d
 
 # ROS 2
 import rclpy
-#from rclpy.executors import MultiThreadedExecutor, SingleThreadedExecutor
-from .TB3node import TurtleBot3_Node #, Gazebo_Pause_Node, Gazebo_Reset_Node, Gazebo_Resume_Node
-
-#from rclpy.qos import qos_profile_sensor_data, qos_profile_services_default
-#from sensor_msgs.msg import LaserScan
-#from std_srvs.srv import Empty
-#from geometry_msgs.msg import Twist,Pose
-
-#from rclpy.qos import QoSProfile
-#from rclpy.qos import QoSReliabilityPolicy
-#from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint # Used for publishing mara joint angles.
-#from control_msgs.msg import JointTrajectoryControllerState
-#from gazebo_msgs.srv import SetEntityState, DeleteEntity
-#from gazebo_msgs.msg import ContactState, ModelState, GetModelList
-#from std_msgs.msg import String
-#from ros2pkg.api import get_prefix_path
-#from builtin_interfaces.msg import Duration
+from .TB3node import TurtleBot3_Node 
 
 
 class TurtleBot3Env(gym.Env):
@@ -62,12 +37,12 @@ class TurtleBot3Env(gym.Env):
         self.port = 11345
 
         # Create a dictionary to store the names of different worlds, their spawn points, and their corresponding target positions
-        world = {}
+        self.world = {}
         
-        world['turtlebot3_room'] = {'spawn_point': [[-3.5, 3.75], [-3.5,-3.75], [-3.0,1.0]], 
+        self.world['turtlebot3_room'] = {'spawn_point': [[-3.5, 3.75], [-3.5,-3.75], [-3.0,1.0]], 
                                     'target_position': [[2.0,3.75], [2.0, -3.75], [0.5,-1.0]]}
         
-        world['turtlebot3_house'] = {'spawn_point': [[-7.0, 4.0], [-7.0, 0.0], [-4.5, 4.0], [2.0, 0.45],[0.5, 4.5]], 
+        self.world['turtlebot3_house'] = {'spawn_point': [[-7.0, 4.0], [-7.0, 0.0], [-4.5, 4.0], [2.0, 0.45],[0.5, 4.5]], 
                                      'target_position': [[-6.0, 2.0], [-6.5, -3.0],[-1.0, 3.5],[6.5, 1.0],[3.5, 4.5]]} # pairs of easier goals
         
         #world['turtlebot3_house'] = {'spawn_point': [-6.5, 3.5], 'target_position': [6.5, 1]} # hard goal (cross the whole house)
@@ -75,7 +50,7 @@ class TurtleBot3Env(gym.Env):
         #world['four_rooms'] = {'spawn_point': [-5.0, 5.0], 'target_position': [5.0, -4.0]} 
 
         #choose the world_name randomly
-        world_name = list(world.keys())[np.random.randint(0,len(world.keys()))]
+        world_name = list(self.world.keys())[np.random.randint(0,len(self.world.keys()))]
         #world_name = 'turtlebot3_house'
 
         # Pass this selected world to the launch file, so we can select world name and spawn point
@@ -83,9 +58,9 @@ class TurtleBot3Env(gym.Env):
         print(env_num, " World name is: ", self.worldname + '.world')
 
         # Pick a possible pair of of spawn_point & target_position randomly
-        self.index = np.random.randint(0,len(world[self.worldname]['spawn_point']))
-        print(env_num, " Spawn point is: ", world[self.worldname]['spawn_point'][self.index])
-        self.spawn_point = world[world_name]['spawn_point'][self.index]
+        self.index = np.random.randint(0,len(self.world[self.worldname]['spawn_point']))
+        print(env_num, " Spawn point is: ", self.world[self.worldname]['spawn_point'][self.index])
+        self.spawn_point = self.world[world_name]['spawn_point'][self.index]
 
         # Launch turtlebot3 in a new Process
         self.launch_subp = ut_launch.startLaunchServiceProcess(
@@ -116,7 +91,7 @@ class TurtleBot3Env(gym.Env):
         #   Environment hyperparams
         #############################
         # Target, where should the agent reach
-        self.targetPosition = np.asarray(world[world_name]['target_position'][self.index])
+        self.targetPosition = np.asarray(self.world[world_name]['target_position'][self.index])
 
         #############################
 
@@ -186,7 +161,7 @@ class TurtleBot3Env(gym.Env):
         while obs_message is None:
             rclpy.spin_once(self.node)
             #print(self.id, " waiting for new scan message")
-            if len(self.node.observation_msg.ranges) == 270:
+            if len(self.node.observation_msg.ranges) == 1081:
                 obs_message = self.node.observation_msg
             else:
                 obs_message = None
@@ -297,6 +272,7 @@ class TurtleBot3Env(gym.Env):
         reward += dist_to_end_diff #[-6, 6]
         reward += (3*rotations_cos_sum) #[-3, 3]
         reward += diff_rotations #[-3*pi, 2*pi]
+        reward = reward/2
         #print("reward at end of intermediate calculation is: ", reward)
 
         if collided: #Detected collision
@@ -350,7 +326,7 @@ class TurtleBot3Env(gym.Env):
         # Resume simulation to take an action
         self.node.resume_sim()
 
-        time.sleep(0.25)
+        time.sleep(0.20)
 
         # Pause simulation
         self.node.pause_sim()
@@ -371,7 +347,7 @@ class TurtleBot3Env(gym.Env):
         if steps_ended:
             done = True
 
-        # Check for any collision. If we check the ranges of the laserscan and any values < 0.20 appear, we are too close to a wall/obstacle.
+        # Check for any collision. If we check the ranges of the laserscan and any values = 0.0 appear, we are too close to a wall/obstacle.
         collided = self.collision(obs)
 
         reward, done = self.calculate_reward(collided, robot_to_goal_orientation, done)
@@ -415,6 +391,13 @@ class TurtleBot3Env(gym.Env):
 
         print("+++++++++++++++++++ ", self.id ," Reset successfully++++++++++++++++++++")
         #self.ros_clock = rclpy.clock.Clock().now().nanoseconds
+
+        # Move model to a new spot after collision
+        if self.collided > 0:
+            randIndex = np.random.randint(0,len(self.world[self.worldname]['spawn_point']))
+            spawn = self.world[self.worldname]['spawn_point'][randIndex]
+            self.node.set_entity_state(spawn)
+            self.targetPosition = np.asarray(self.world[self.worldname]['target_position'][randIndex])
 
         self.node.resume_sim()
         time.sleep(1.5)

@@ -1,13 +1,12 @@
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data, qos_profile_services_default
-#from rclpy.executors import MultiThreadedExecutor
 
 from sensor_msgs.msg import LaserScan
 from std_srvs.srv import Empty
-from geometry_msgs.msg import Twist #,Pose
-from gazebo_msgs.msg import ModelStates
-#import os
+from geometry_msgs.msg import Twist
+from gazebo_msgs.msg import ModelStates, EntityState
+from gazebo_msgs.srv import SetEntityState
 
 class TurtleBot3_Node(Node):
 
@@ -26,13 +25,12 @@ class TurtleBot3_Node(Node):
         # Gazebo simulation related controls: Puase, Resume, and Reset
         self.pause = self.create_client(Empty, '/pause_physics')
         self.resume = self.create_client(Empty, '/unpause_physics')  
-        #self.reset = self.create_client(Empty, '/reset_simulation')
         self.reset= self.create_client(Empty, '/reset_world')
 
-        # Subscribe to the appropriate topics: sub_position for position and orientation; sub_scan for observation from laserscan
-        # need to subscribe to a gazebo service for model_states to get waffle_depth position (x,y,z)
-        # to help determine rewards in step() and get orientation (quaternion [x y z w])
-        
+        # Create a client for the set_entity_state service
+        self.set_state = self.create_client(SetEntityState, '/gazebo/set_entity_state')
+
+        # Subscribe to the appropriate topics: sub_position for position and orientation; sub_scan for observation from laserscan        
         self._sub_position = self.create_subscription(ModelStates, '/gazebo/model_states', self.position_callback, qos_profile=qos_profile_sensor_data)
         self._sub_scan = self.create_subscription(LaserScan, '/scan', self.observation_callback, qos_profile=qos_profile_sensor_data)
     
@@ -133,6 +131,30 @@ class TurtleBot3_Node(Node):
         #    print("Got past the service request: RESUME")
         #else:
         #    print("!~~~~~~~~~~~~~~~~~~Failed to resume world~~~~~~~~~~~~~~~~~~!")
+
+    def set_entity_state(self, position):
+        """
+        Set the position of the waffle_depth model in gazebo
+        """
+        while not self.set_state.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('gazebo/set_entity_state service not available, waiting again...')
+        
+        # Create an EntityState message
+        state_msg = EntityState()
+        state_msg.name = 'waffle_depth'
+        state_msg.pose.position.x = position[0]
+        state_msg.pose.position.y = position[1]
+        state_msg.pose.position.z = 0.0
+
+        req = SetEntityState.Request()
+        req.state = state_msg
+
+        set_state_future = self.set_state.call_async(req)
+        rclpy.spin_until_future_complete(self, set_state_future, timeout_sec=10)
+        #if set_state_future.result() is not None:
+        #    print("Got past the service request: SET STATE")
+        #else:
+        #    print("!~~~~~~~~~~~~~~~~~~Failed to set model state~~~~~~~~~~~~~~~~~~!")
         
 
 '''class Gazebo_Resume_Node(Node):
