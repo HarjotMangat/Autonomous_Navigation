@@ -94,7 +94,7 @@ class Config:
 
     # Input of the DNN
     STACKED_FRAMES = 4
-    OBSERVATION_SIZE = 270 + OBSERVATION_ROTATION_SIZE
+    OBSERVATION_SIZE = 1081 + OBSERVATION_ROTATION_SIZE
 
     # Total number of episodes and annealing frequency
     EPISODES = 40000

@@ -30,7 +30,7 @@ from multiprocessing import Process, Queue, Value
 import rclpy
 import rclpy.executors
 import tensorflow as tf
-from gym_gazebo2.envs.Turtlebot3.TB3node import TurtleBot3_Node #, Gazebo_Pause_Node, Gazebo_Reset_Node, Gazebo_Resume_Node
+from gym_gazebo2.envs.Turtlebot3.TB3node import TurtleBot3_Node
 
 
 
@@ -65,7 +65,7 @@ class ProcessAgent(Process):
     def _accumulate_rewards(experiences, discount_factor, terminal_reward):
         reward_sum = terminal_reward
         print("Accumulating rewards ", reward_sum)
-        for t in reversed(range(0, len(experiences))):
+        for t in reversed(range(0, len(experiences) - 1)):
             r = np.clip(experiences[t].reward, Config.REWARD_MIN, Config.REWARD_MAX)
             reward_sum = discount_factor * reward_sum + r
             experiences[t].reward = reward_sum
