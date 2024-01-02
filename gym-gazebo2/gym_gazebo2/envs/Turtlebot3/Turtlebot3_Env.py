@@ -39,11 +39,11 @@ class TurtleBot3Env(gym.Env):
         # Create a dictionary to store the names of different worlds, their spawn points, and their corresponding target positions
         self.world = {}
         
-        self.world['turtlebot3_room'] = {'spawn_point': [[-3.5, 3.75], [-3.5,-3.75], [-3.0,1.0]], 
-                                    'target_position': [[2.0,3.75], [2.0, -3.75], [0.5,-1.0]]}
+        self.world['turtlebot3_room'] = {'spawn_point': [[-3.5, 3.75],[-3.5, -3.75],[-3.0, 1.0], [-3.5, 3.75],[-3.5, -3.75]], 
+                                     'target_position': [[2.0, 3.75], [2.0, -3.75], [0.5, -1.0], [2.0, 0.0], [2.0, 0.0]]} # piars of easy[3 of them] & medium[2 of them] goals
         
-        self.world['turtlebot3_house'] = {'spawn_point': [[-7.0, 4.0], [-7.0, 0.0], [-4.5, 4.0], [2.0, 0.45],[0.5, 4.5]], 
-                                     'target_position': [[-6.0, 2.0], [-6.5, -3.0],[-1.0, 3.5],[6.5, 1.0],[3.5, 4.5]]} # pairs of easier goals
+        self.world['turtlebot3_house'] = {'spawn_point': [[-7.0, 4.0], [-7.0, 0.0], [-4.5, 4.0], [2.0, 0.45],[0.5, 4.5],[-6.5, 3.5],[-7.0, 4.0],[0.5, 4.5]], 
+                                      'target_position': [[-6.0, 2.0], [-6.5, -3.0],[-1.0, 3.5], [6.5, 1.0], [3.5, 4.5],[6.5, 1.0], [-1.0, 3.5],[6.5, 1.0]]} # pairs of easy[5 of them], hard[1 of them], & medium[2 of them] goals
         
         #world['turtlebot3_house'] = {'spawn_point': [-6.5, 3.5], 'target_position': [6.5, 1]} # hard goal (cross the whole house)
         #world['turtlebot3_world'] = {'spawn_point': [-1.5, -0.5], 'target_position': [2, 0]} # might have been too consfusing for the agent.
@@ -57,7 +57,7 @@ class TurtleBot3Env(gym.Env):
         self.worldname = world_name
         print(env_num, " World name is: ", self.worldname + '.world')
 
-        # Pick a possible pair of of spawn_point & target_position randomly
+        # Pick a possible pair of spawn_point & target_position randomly
         self.index = np.random.randint(0,len(self.world[self.worldname]['spawn_point']))
         print(env_num, " Spawn point is: ", self.world[self.worldname]['spawn_point'][self.index])
         self.spawn_point = self.world[world_name]['spawn_point'][self.index]
@@ -285,7 +285,19 @@ class TurtleBot3Env(gym.Env):
                 print("+++++++++++++++++++++++++++++++++++++++++++++++++++++")
                 print("++++++++++++++++++GOAL REACHED+++++++++++++++++++++++")
                 print("+++++++++++++++++++++++++++++++++++++++++++++++++++++")
-                done = True
+
+                # pick a new goal
+                newIndex = np.random.randint(0, len(self.world[self.worldname]['spawn_point']))
+                newTarget = np.asarray(self.world[self.worldname]['target_position'][newIndex])
+                if np.array_equal(newTarget, self.targetPosition):
+                    while np.array_equal(newTarget, self.targetPosition):
+                        newIndex = np.random.randint(0,len(self.world[self.worldname]['spawn_point']))
+                        newTarget = np.asarray(self.world[self.worldname]['target_position'][newIndex])
+
+                self.targetPosition = newTarget
+                print(self.id, "New goal position is: ", self.targetPosition)
+
+                #done = True
 
         return reward, done
     
