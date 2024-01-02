@@ -23,7 +23,7 @@ plt.plot(x_values, y_values)
 # Add title to the plot
 plt.title('Steps per Epiosde')
 
-# Add labels to the plot, x is the episode number, y is the RPolicy
+# Add labels to the plot, x is the episode number, y is the steps
 plt.xlabel('Episode')
 plt.ylabel('Steps')
 
