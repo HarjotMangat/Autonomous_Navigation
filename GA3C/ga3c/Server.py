@@ -130,6 +130,8 @@ class Server:
                 self.save_model()
                 self.stats.should_save_model.value = 0
 
+            time.sleep(0.01)
+
         self.dynamic_adjustment.exit_flag = True
         while self.agents:
             self.remove_agent()
