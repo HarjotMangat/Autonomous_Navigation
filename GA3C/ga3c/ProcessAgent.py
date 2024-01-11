@@ -152,6 +152,7 @@ class ProcessAgent(Process):
                 experiences = [experiences[-1]]
                 reward_sum = 0.0
 
+            step_iteration += 1
             time_count += 1
 
     def run(self):
