@@ -26,10 +26,8 @@
 
 from threading import Thread
 import numpy as np
-import tensorflow as tf
 
 from Config import Config
-
 
 class ThreadTrainer(Thread):
     def __init__(self, server, id):
@@ -55,14 +53,6 @@ class ThreadTrainer(Thread):
                 print("batch size is: ", batch_size)
             
             if Config.TRAIN_MODELS:
-                #trainX = tf.convert_to_tensor(x__, dtype=tf.float32)
-                #trainR = tf.convert_to_tensor(r__, dtype=tf.float32)
-                #trainA = tf.convert_to_tensor(a__, dtype=tf.float32)
-                #tensorID = tf.convert_to_tensor(self.id, dtype=tf.int32)
-                trainX = tf.Variable(x__, dtype=tf.float32)
-                trainR = tf.Variable(r__, dtype=tf.float32)
-                trainA = tf.Variable(a__, dtype=tf.float32)
-                tensorID = tf.Variable(self.id, dtype=tf.int32)
-                #self.server.train_model(x__, r__, a__, self.id)
+
                 print("Sending training data to server")
-                self.server.train_model(trainX, trainR, trainA, tensorID)
+                self.server.train_model(x__, r__, a__, self.id)

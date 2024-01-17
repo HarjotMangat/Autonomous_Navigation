@@ -30,9 +30,7 @@ import tensorflow as tf
 import time
 
 from Config import Config
-#from Environment import Environment
 from NetworkKeras import NetworkVPKeras
-#from NetworkVPTF2 import NetworkVP
 from ProcessAgent import ProcessAgent
 from ProcessStats import ProcessStats
 from ThreadDynamicAdjustment import ThreadDynamicAdjustment
@@ -47,10 +45,8 @@ class Server:
         self.training_q = Queue(maxsize=Config.MAX_QUEUE_SIZE)
         self.prediction_q = Queue(maxsize=Config.MAX_QUEUE_SIZE)
 
-        #self.model = NetworkVP(Config.DEVICE, Config.NETWORK_NAME, Config.ACTION_SPACE)
         self.model = NetworkVPKeras(Config.DEVICE, Config.NETWORK_NAME, Config.ACTION_SPACE)
         if Config.LOAD_CHECKPOINT:
-            #self.stats.episode_count.value = self.model.load()
             self.stats.episode_count.value = Config.LOAD_EPISODE
             self.stats.best_policy_value.value = Config.LOAD_POLICY_VALUE
 
@@ -94,7 +90,11 @@ class Server:
         self.trainers.pop()
 
     def train_model(self, x_, r_, a_, trainer_id):
-        self.model.train(x_, r_, a_, trainer_id)
+        trainX = tf.Variable(x_, dtype=tf.float32)
+        trainR = tf.Variable(r_, dtype=tf.float32)
+        trainA = tf.Variable(a_, dtype=tf.float32)
+        tensorID = tf.Variable(trainer_id, dtype=tf.int32)
+        self.model.train(trainX, trainR, trainA, tensorID)
         self.training_step += 1
         self.frame_counter += x_.shape[0]
 

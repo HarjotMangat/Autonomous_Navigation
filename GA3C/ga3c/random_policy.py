@@ -2,34 +2,8 @@ import gym
 import gym_gazebo2
 import time
 from multiprocessing import Process
-import os
 from Config import Config
 import numpy as np
-import rclpy
-from gym_gazebo2.envs.Turtlebot3.TB3node import TurtleBot3_Node
-
-'''
-env = gym.make('TurtleBot3Lidar-v0', env_num=1)
-
-env.reset()
-    
-print("Successfully reset the environment")
-time.sleep(5)
-done = False
-while not done:
-    
-    # take a random action
-    rand_action = env.action_space.sample()
-    observation, reward, done, info = env.step(rand_action)
-    print("random action is: , ", rand_action)
-    #print("observation is: ", observation)
-    #time.sleep(.5)
-
-env.reset()
-time.sleep(5)
-env.close()
-print(info)
-'''
 
 class Experience:
     def __init__(self, state, action, reward, done):
@@ -79,24 +53,13 @@ class TestProcessAgent():
 
 
     def select_action(self, env):
-        #if self.id == 0:
-        #    action = 3
-        #elif self.id == 1:
-        #    action = 6
-        #else:
-        #    action = 0
         #action = env.action_space.sample()
         action = int(input("Enter Action for this step "))
         return action
 
     def run_episode(self, env):
-        print("Agent began running an episode")
-        #time.sleep(1)
-        #obs = self.env.reset()
-        #self.turtlenode.reset_sim()
+        print("Agent began running an episode")  
         self.state = env.reset()
-        #time.sleep(2)
-        #print("issue resetting env??")
         done = False
         experiences = []
 
@@ -104,11 +67,8 @@ class TestProcessAgent():
         reward_sum = 0.0
 
         #step_iteration = 0
-        #print("value of done is: ", done)
         while not done:
             # very first few frames
-            #current_state = self.node.observation_msg.ranges
-            #print("current state of the env is :", env.take_observation())
             if self.state is None:
                 print("empty state, taking random action")
                 action = self.select_action(env)
@@ -165,14 +125,6 @@ class TestProcessAgent():
 
 if __name__ == '__main__':
     #p = TestProcessAgent(id=0)
-    #p1 = TestProcessAgent(id=1)
-    #p2 = TestProcessAgent(id=2)
     #p.start()
-    #time.sleep(10)
-    #p1.start()
-    #time.sleep(15)
-    #p2.start()
     #p.join()
-    #p1.join()
-    #p2.join()
     TestProcessAgent(id=1).run()

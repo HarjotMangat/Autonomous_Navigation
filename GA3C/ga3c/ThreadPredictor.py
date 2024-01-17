@@ -46,25 +46,15 @@ class ThreadPredictor(Thread):
         states = np.zeros(
             (Config.PREDICTION_BATCH_SIZE, Config.OBSERVATION_SIZE, Config.STACKED_FRAMES),
             dtype=np.float32)
-        
-        #rotations = np.zeros(
-        #    (Config.PREDICTION_BATCH_SIZE, Config.OBSERVATION_ROTATION_SIZE, Config.STACKED_FRAMES),
-        #    dytpe=np.float32)
 
         while not self.exit_flag:
             ids[0], states[0] = self.server.prediction_q.get()
-            #ids[0], states[0], rotations[0] = i, x[0], x[1]
-
             size = 1
             while size < Config.PREDICTION_BATCH_SIZE and not self.server.prediction_q.empty():
-                #i, x = self.server.prediction_q.get()
                 ids[size], states[size] = self.server.prediction_q.get()
                 size += 1
 
-            #state_batch = states[:size]
-            #rotation_batch = rotations[:size]
             batch = states[:size]
-            #predbatch = tf.convert_to_tensor(batch)
             predbatch = tf.Variable(batch)
             p, v = self.server.model.predict_p_and_v(predbatch)
 

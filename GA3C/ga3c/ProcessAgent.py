@@ -26,13 +26,8 @@
 
 from datetime import datetime
 from multiprocessing import Process, Queue, Value
-#from gym_gazebo2.envs.Turtlebot3.Turtlebot3_Env import TurtleBot3Env
-import rclpy
-import rclpy.executors
+
 import tensorflow as tf
-from gym_gazebo2.envs.Turtlebot3.TB3node import TurtleBot3_Node
-
-
 
 import numpy as np
 import time
@@ -50,9 +45,6 @@ class ProcessAgent(Process):
         self.training_q = training_q
         self.episode_log_q = episode_log_q
 
-        #self.env = Environment(self.id)
-        #self.node = TurtleBot3_Node(env_id=self.id)
-        #self.num_actions = self.env.get_num_actions()
         self.num_actions = Config.ACTION_SPACE
         self.actions = np.arange(self.num_actions)
 
@@ -64,20 +56,17 @@ class ProcessAgent(Process):
     @staticmethod
     def _accumulate_rewards(experiences, discount_factor, terminal_reward):
         reward_sum = terminal_reward
-        print("Accumulating rewards ", reward_sum)
         for t in reversed(range(0, len(experiences) - 1)):
             r = np.clip(experiences[t].reward, Config.REWARD_MIN, Config.REWARD_MAX)
             reward_sum = discount_factor * reward_sum + r
             experiences[t].reward = reward_sum
-        #return experiences[:-1]
         return experiences
 
     def convert_data(self, experiences):
-        print("Printing values in experiences ", self.id)
-        for exp in experiences:
-            #print("States: ", exp.state)
-            print("Rewards: ",exp.reward)
-            print("Actions: ", exp.action)
+        #print("Printing values in experiences ", self.id)
+        #for exp in experiences:
+        #    print("Rewards: ",exp.reward)
+        #    print("Actions: ", exp.action)
         x_ = np.array([exp.state for exp in experiences])
         a_ = np.eye(self.num_actions)[np.array([exp.action for exp in experiences])].astype(np.float32)
         r_ = np.array([exp.reward for exp in experiences])
@@ -102,11 +91,8 @@ class ProcessAgent(Process):
         return action
 
     def run_episode(self, env):
-        print("Agent began running an episode")
-
         env.reset()
         time.sleep(1.5)
-        #self.env.reset()
         done = False
         experiences = []
 
@@ -116,20 +102,15 @@ class ProcessAgent(Process):
 
         while not done:
             # very first few frames
-            #current_state = self.node.observation_msg.ranges
-            #print("current state of the env is :", env.current_state)
             if env.current_state is None:
-                #current_state = self.node.observation_msg.ranges
-                print("Empty state, filling frame buffer")
+                print("Agent ", self.id, " Empty state, filling frame buffer")
                 env.step(None)  # NOOP, used to fill the first 4 frames of buffer
                 continue
 
             prediction, value = self.predict(env.current_state)
-            #prediction, value = self.predict(current_state)
-
             action = self.select_action(prediction)
             reward, done = env.step(action)
-            print(self.id, " action taken was: ", action, "reward recieved was: ", reward)
+            print("Agent ",self.id, "Action was: ", action, "Reward was: ", reward)
             reward_sum += reward
 
             if Config.MAX_STEP_ITERATION < step_iteration:

@@ -31,14 +31,9 @@ else:
     from Queue import Queue
 
 import numpy as np
-import scipy.misc as misc
-import time
 
 from Config import Config
 from GameManager import GameManager
-#from gym_gazebo2.envs.Turtlebot3.Turtlebot3_Env import TurtleBot3Env
-
-
 
 class Environment:
     def __init__(self, num1):
@@ -49,21 +44,6 @@ class Environment:
         self.previous_state = None
         self.current_state = None
         self.total_reward = 0
-
-        #self.reset()
-
-    '''
-    @staticmethod
-    def _rgb2gray(rgb):
-        return np.dot(rgb[..., :3], [0.299, 0.587, 0.114])
-
-    @staticmethod
-    def _preprocess(image):
-        image = Environment._rgb2gray(image)
-        image = misc.imresize(image, [Config.IMAGE_HEIGHT, Config.IMAGE_WIDTH], 'bilinear')
-        image = image.astype(np.float32) / 128.0 - 1.0
-        return image
-    '''
 
     def _get_current_state(self):
         if not self.frame_q.full():
@@ -76,16 +56,10 @@ class Environment:
     def _update_frame_q(self, frame):
         if self.frame_q.full():
             self.frame_q.get()
-        #image = Environment._preprocess(frame)
         self.frame_q.put(frame)
 
     def get_num_actions(self):
-        #return self.game.env.action_space.n
         return Config.ACTION_SPACE
-    
-    #def getcollision(self):
-    #    val = self.game.checkcollision()
-    #    return val
 
     def reset(self):
         self.total_reward = 0

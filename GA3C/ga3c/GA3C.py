@@ -31,7 +31,6 @@ import tensorflow as tf
 if sys.version_info < (3,0):
     warnings.warn("Optimized for Python3. Performance may suffer under Python2.", Warning)
 
-#import gym
 
 from Config import Config
 from Server import Server
@@ -56,7 +55,6 @@ if Config.PLAY_MODE:
     Config.TRAIN_MODELS = False
     Config.SAVE_MODELS = False
 
-#gym.undo_logger_setup()
 physical_devices = tf.config.list_physical_devices('GPU')
 try:
     tf.config.experimental.set_memory_growth(physical_devices[0], True)

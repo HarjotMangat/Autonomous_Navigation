@@ -26,8 +26,7 @@
 
 import gym
 from Config import Config
-#from gym_gazebo2.envs.Turtlebot3.Turtlebot3_Env import TurtleBot3Env
-import time
+
 import gym_gazebo2
 
 
@@ -39,31 +38,17 @@ class GameManager:
         print("Process ", id," made a new env")
 
         self.game_env = gym.make(game_name, env_num=id, render = Config.RENDER)
-        #self.reset()
 
     def reset(self):
         observation = self.game_env.reset() 
-        #print("waiting for env to reset")
-        #time.sleep(5)
         return observation
 
     def step(self, action):
-        #self._update_display()
-        #print("entered game step")
-        #print("selecting action ", action)
         observation, reward, done, info = self.game_env.step(action)
         return observation, reward, done, info
 
-    #def _update_display(self):
-    #    if self.display:
-    #       self.game_env.render()
-
     def observation_size(self):
-        #return self.game_env.observation_size()
         return Config.OBSERVATION_SIZE
-    
-    #def checkcollision(self):
-    #    return self.game_env.collision((1,2,3,4))
 
     def close(self):
         self.game_env.close()

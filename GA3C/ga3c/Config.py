@@ -76,7 +76,7 @@ class Config:
     # Algorithm parameters
 
     # Max step iteration
-    MAX_STEP_ITERATION = 1024
+    MAX_STEP_ITERATION = 400 #1024
     
     # Discount factor
     DISCOUNT = 0.99

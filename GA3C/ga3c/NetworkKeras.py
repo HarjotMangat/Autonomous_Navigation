@@ -2,7 +2,6 @@ import numpy as np
 import tensorflow as tf
 import os
 import re
-import multiprocessing
 
 from Config import Config
 
@@ -29,11 +28,7 @@ def loss_function(y_true, y_pred, beta):
 
     #computing a total loss for the model, using policy loss and value function loss
     self.cost_all = self.cost_p + self.cost_v'''
-    #value_loss = 0.5 * tf.math.squared_difference(Y_r, value_output)
-    #policy_loss = -tf.reduce_sum(tf.math.log(policy_output + 1e-10) * action_index, axis=1)
-    #total_loss = policy_loss + (0.5 * value_loss) - (0.01 * policy_output)
-
-
+ 
     action_index, Y_r = y_true #action_index is a tensor of shape (batch_size, num_actions), Y_r is a tensor of shape (batch_size, 1)
     policy_output, value_output = y_pred # policy_output is a tensor of shape (batch_size, num_actions), value_output is a tensor of shape (batch_size, 1)
  
@@ -41,7 +36,6 @@ def loss_function(y_true, y_pred, beta):
     
     selected_action_prob = tf.reduce_sum(policy_output * action_index, axis=1) 
     cost_p_1 = tf.math.log(tf.maximum(selected_action_prob, Config.LOG_EPSILON)) * (Y_r - tf.stop_gradient(value_output))
-    #cost_p_2 = -1 * Config.BETA_START * tf.reduce_sum(tf.math.log(tf.maximum(policy_output, Config.LOG_EPSILON)) * policy_output, axis=1)
     cost_p_2 = -1 * beta * tf.reduce_sum(tf.math.log(tf.maximum(policy_output, Config.LOG_EPSILON)) * policy_output, axis=1)
     cost_p_1_agg = tf.reduce_sum(cost_p_1, axis=0)
     cost_p_2_agg = tf.reduce_sum(cost_p_2, axis=0)
@@ -53,18 +47,10 @@ def loss_function(y_true, y_pred, beta):
 
 class NetworkVPKeras:
     def __init__(self, device, model_name, num_actions):
-        #physical_devices = tf.config.list_physical_devices('GPU')
-        #try:
-        #    tf.config.experimental.set_memory_growth(physical_devices[0], True)
-        #    print("worked")
-        #except:
-        #    print("didn't work")
-            # Invalid device or cannot modify virtual devices once initialized.
-        #    pass
+
         self.device = device
         self.model_name = model_name
         self.num_actions = num_actions
-        #self.lock = multiprocessing.Lock()
 
         self.observation_size = Config.OBSERVATION_SIZE
         self.rotation_size = Config.OBSERVATION_ROTATION_SIZE
@@ -83,14 +69,12 @@ class NetworkVPKeras:
     
     def _build_model(self):
 
-        #self.inputs = tf.keras.Input(shape=(None, self.observation_size, self.observation_channels))
         self.inputs = tf.keras.Input(shape=(self.observation_size, self.observation_channels))
         self.Conv1 = tf.keras.layers.Conv1D(9, 16, strides=5, activation='relu')(self.inputs)
         self.Conv2 = tf.keras.layers.Conv1D(5, 32, strides=3, activation='relu')(self.Conv1)
         self.flattenlayer = tf.keras.layers.Flatten()(self.Conv2)
         self.Dense1 = tf.keras.layers.Dense(256, activation='relu')(self.flattenlayer)
         
-        #self.policy_layer = tf.keras.layers.Dense(self.num_actions, activation=tf.keras.activations.softmax, name="policy_output")(self.Dense1)
         self.policy_layer = tf.keras.layers.Dense(self.num_actions,activation=None,name="policy_output")(self.Dense1)
         self.softmax_p = (tf.nn.softmax(self.policy_layer) + Config.MIN_POLICY) / (1.0 + Config.MIN_POLICY * self.num_actions)
         self.q_value_layer = tf.keras.layers.Dense(1, activation=None, name="Qvalue_output")(self.Dense1)
@@ -102,19 +86,14 @@ class NetworkVPKeras:
                                                   momentum=Config.RMSPROP_MOMENTUM,
                                                   epsilon=Config.RMSPROP_EPSILON, 
                                                   weight_decay=Config.RMSPROP_DECAY),
-            loss= loss_function,
-            #loss={'policy_output': tf.keras.losses.CategoricalCrossentropy(from_logits=True), 
-            #      'Qvalue_output': tf.keras.losses.CategoricalCrossentropy(from_logits=True)},
-        
+            loss= loss_function,        
         )
         print(self.new_model.summary())
         return self.new_model 
 
     # Y_r is target value and a is action index
-    # Maybe set this up as tf.function and pass x, y_r, a as tensors
     @tf.function
     def train(self, x, y_r, a, trainer_id):
-        #self.lock.acquire()
         y_true = [a, y_r]
 
         tf.print("**********************************************")
@@ -127,30 +106,21 @@ class NetworkVPKeras:
             logits = self.model(x, training=True)
 
             #loss_value for batch
-            #tf.print("y_true is: \n", y_true) #y_true is [actions (batch_size, num_actions), rewards (batch_size, 1)]
-            #tf.print("logits are: \n", logits) #logits is [policy_layer (batch_size, num_actions), q_value_layer (batch_size, 1)]
             loss_value = loss_function(y_true, logits, self.beta) #loss_value is a tensor of shape (batch_size)
             tf.print("loss during training was calculated as: \n", loss_value, loss_value.shape)
 
         gradients = tape.gradient(loss_value, self.model.trainable_weights)
         self.model.optimizer.apply_gradients(zip(gradients, self.model.trainable_weights))
         tf.print("**********************************************")
-        #self.lock.release()
 
     @tf.function
     def predict_p_and_v(self, x):
-        #self.lock.acquire()
-        #result = self.model(x, training=False)
-        #self.lock.release()
-        #return result
-
         return self.model(x, training=False)
 
     def _checkpoint_filename(self, episode, policy_value):
         return 'checkpoints/%s_%08d_%04d.keras' % (self.model_name, episode, policy_value)
     
     def save(self, episode, policy_value):
-        #self.saver.save(self.sess, self._checkpoint_filename(episode))
         tf.keras.models.save_model(model=self.model, filepath=self._checkpoint_filename(episode=episode, policy_value=policy_value))
 
     def load(self):
@@ -174,7 +144,6 @@ class NetworkVPKeras:
                     val, extension = val.split('.')
                     if int(ep) == Config.LOAD_EPISODE:
                         filename = self._checkpoint_filename(episode=Config.LOAD_EPISODE, policy_value=int(val))
-            #filename = self._checkpoint_filename(Config.LOAD_EPISODE)
         print("filename is: ", filename)
         Config.LOAD_EPISODE = int(re.findall(r'\d+', filename)[0])
         Config.LOAD_POLICY_VALUE = float(re.findall(r'\d+', filename)[1])
