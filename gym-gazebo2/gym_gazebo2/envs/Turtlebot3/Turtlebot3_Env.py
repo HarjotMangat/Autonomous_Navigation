@@ -6,15 +6,12 @@ import numpy as np
 import psutil
 from scipy.stats import skew
 from gym import utils, spaces
-from gym_gazebo2.utils import ut_generic, ut_launch #, ut_mara, ut_math, ut_gazebo, tree_urdf, general_utils
+from gym_gazebo2.utils import ut_launch
 from gym.utils import seeding
-
-import os
 
 # ROS 2
 import rclpy
 from .TB3node import TurtleBot3_Node 
-
 
 class TurtleBot3Env(gym.Env):
     """
@@ -25,13 +22,6 @@ class TurtleBot3Env(gym.Env):
         """
         Initialize the Turtlebot3 environemnt
         """
-        # Manage command line args
-        #args = ut_generic.getArgsParserMARA().parse_args()
-        #self.gzclient = args.gzclient
-        #self.multiInstance = args.multiInstance
-        #self.port = args.port
-        #print("Self.port is: ", self.port) #11345
-        #self.gzclient = False
         self.gzclient = render
         self.multiInstance = True
         self.port = 11345
@@ -45,13 +35,9 @@ class TurtleBot3Env(gym.Env):
         self.world['turtlebot3_house'] = {'spawn_point': [[-7.0, 4.0], [-7.0, 0.0], [-4.5, 4.0], [2.0, 0.45],[0.5, 4.5],[-6.5, 3.5],[-7.0, 4.0],[0.5, 4.5]], 
                                       'target_position': [[-6.0, 2.0], [-6.5, -3.0],[-1.0, 3.5], [6.5, 1.0], [3.5, 4.5],[6.5, 1.0], [-1.0, 3.5],[6.5, 1.0]]} # pairs of easy[5 of them], hard[1 of them], & medium[2 of them] goals
         
-        #world['turtlebot3_house'] = {'spawn_point': [-6.5, 3.5], 'target_position': [6.5, 1]} # hard goal (cross the whole house)
-        #world['turtlebot3_world'] = {'spawn_point': [-1.5, -0.5], 'target_position': [2, 0]} # might have been too consfusing for the agent.
-        #world['four_rooms'] = {'spawn_point': [-5.0, 5.0], 'target_position': [5.0, -4.0]} 
 
         #choose the world_name randomly
         world_name = list(self.world.keys())[np.random.randint(0,len(self.world.keys()))]
-        #world_name = 'turtlebot3_house'
 
         # Pass this selected world to the launch file, so we can select world name and spawn point
         self.worldname = world_name
@@ -82,7 +68,7 @@ class TurtleBot3Env(gym.Env):
         self.prevPosition = None
         self.Orientation = None
         self.prevOrientation = None
-        self.max_episode_steps = 1024 #default value, can be updated from baselines
+        self.max_episode_steps = 410 #default value, can be updated from baselines
         self.iterator = 0
         self.currentDistance = None
         self.previousDistance = 1000
@@ -119,7 +105,6 @@ class TurtleBot3Env(gym.Env):
         return math.sqrt(x*x + y*y)
     
     def get_orientation(self, orientation, position):
-
         # Get yaw of the turtlebot with respect to the gazebo world
         x = orientation.x
         y = orientation.y
@@ -134,17 +119,11 @@ class TurtleBot3Env(gym.Env):
         robot_goal_angle = math.degrees(robot_goal_calc)
 
         # Get the difference between the two angles (robot_world_yaw & robot_goal_angle) to determine how much the robot should rotate to face goal
-        #diff = (robot_world_yaw - robot_goal_angle) % (math.pi * 2)
-        #if diff >= math.pi:
-        #    diff -= math.pi * 2
-
         diff = (robot_world_yaw - robot_goal_angle)
         if diff > 180:
             diff -= 360
         elif diff < -180:
             diff += 360
-            
-        #print("Difference between robot orientation and goal position is: ", diff)
 
         return diff
 
@@ -203,10 +182,8 @@ class TurtleBot3Env(gym.Env):
 
     def collision(self, obs):
         # Detect if there is a collision, return Boolean
-
-        #print("Incoming ovbservation is: ", obs)
         if min(obs) == 0.0:
-            print("++++++++++++++++++COLLISION DETECTED+++++++++++++++++++++++")
+            print("\n++++++++++++++++++COLLISION DETECTED+++++++++++++++++++++++\n")
 
             self.collided += 1
             self.node.action_publish(None)
@@ -216,8 +193,6 @@ class TurtleBot3Env(gym.Env):
         
     def calculate_reward(self, collided, robot_to_goal_orientation, done):
         #Calculate Rewards. -20 for collision, 20 for reaching goal, small intermediate rewards for being closer to goal(by distance and orientation)
-        
-        #done = False
         reward = 0.0
 
         #calculating some value for intermediate rewards
@@ -280,7 +255,7 @@ class TurtleBot3Env(gym.Env):
             done = True
 
         # check that robot reached goal
-        elif self.currentDistance <= 0.25:
+        elif self.currentDistance <= 0.5:
                 reward = 20
                 print("+++++++++++++++++++++++++++++++++++++++++++++++++++++")
                 print("++++++++++++++++++GOAL REACHED+++++++++++++++++++++++")
@@ -297,8 +272,6 @@ class TurtleBot3Env(gym.Env):
                 self.targetPosition = newTarget
                 print(self.id, "New goal position is: ", self.targetPosition)
 
-                #done = True
-
         return reward, done
     
     def encode_orientation(self, robot_to_goal_orientation):
@@ -309,8 +282,6 @@ class TurtleBot3Env(gym.Env):
         robot_to_goal_orientation = robot_to_goal_orientation // interval_size #divides the range into 128 intervals
         encoding = np.zeros(128) #creates a vector of 128 zeros
         encoding[int(robot_to_goal_orientation)] = 1 #sets the index of the interval to 1
-        #print("The encoding of the orientation is: ", encoding)
-
         return encoding
 
     def seed(self, seed=None):
@@ -351,8 +322,8 @@ class TurtleBot3Env(gym.Env):
         self.currentDistance = self.get_distance(self.Position)
         robot_to_goal_orientation = self.get_orientation(self.Orientation, self.Position)
 
-        print(self.id, " Distance to goal is: ", self.currentDistance)
-        print(self.id, " Orientation to goal is: ", robot_to_goal_orientation)
+        #print(self.id, " Distance to goal is: ", self.currentDistance)
+        #print(self.id, " Orientation to goal is: ", robot_to_goal_orientation)
         
         # Calculate if the steps have been exausted
         steps_ended = bool(self.iterator == self.max_episode_steps)
@@ -364,7 +335,7 @@ class TurtleBot3Env(gym.Env):
 
         reward, done = self.calculate_reward(collided, robot_to_goal_orientation, done)
 
-        print(self.id, " On step: ", self.iterator)
+        #print(self.id, " On step: ", self.iterator)
 
         encoding = self.encode_orientation(robot_to_goal_orientation)
 
@@ -401,7 +372,7 @@ class TurtleBot3Env(gym.Env):
         # reset simulation
         self.node.reset_sim()
 
-        print("+++++++++++++++++++ ", self.id ," Reset successfully++++++++++++++++++++")
+        print(self.id ," Reset successfully")
         #self.ros_clock = rclpy.clock.Clock().now().nanoseconds
 
         # Move model to a new spot after collision
