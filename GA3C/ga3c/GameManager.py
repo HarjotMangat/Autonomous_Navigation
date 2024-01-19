@@ -38,6 +38,7 @@ class GameManager:
         print("Process ", id," made a new env")
 
         self.game_env = gym.make(game_name, env_num=id, render = Config.RENDER)
+        self.game_env.set_episode_size(Config.STACKED_FRAMES + Config.MAX_STEP_ITERATION)
 
     def reset(self):
         observation = self.game_env.reset() 
