@@ -191,7 +191,7 @@ class TurtleBot3Env(gym.Env):
         else:
             return False
         
-    def calculate_reward(self, collided, robot_to_goal_orientation, done):
+    def calculate_reward(self, collided, out_of_steps, robot_to_goal_orientation, done):
         #Calculate Rewards. -20 for collision, 20 for reaching goal, small intermediate rewards for being closer to goal(by distance and orientation)
         reward = 0.0
 
@@ -211,12 +211,10 @@ class TurtleBot3Env(gym.Env):
             dist_to_end_last = self.currentDistance
         else:
             dist_to_end_last = self.previousDistance
+        
 
-        # differnece in current distance and last distance
-        if self.previousDistance == 1000:
-            dist_to_end_diff = self.currentDistance
-        else:
-            dist_to_end_diff = abs(self.previousDistance - self.currentDistance) #distance to end of episode
+        # difference in current distance and last distance
+        dist_to_end_diff = abs(dist_to_end_last - dist_to_end)
 
         if self.prevOrientation is None:
             prev_robot_to_goal_orientation = 0
@@ -247,10 +245,10 @@ class TurtleBot3Env(gym.Env):
         reward += dist_to_end_diff #[-6, 6]
         reward += (3*rotations_cos_sum) #[-3, 3]
         reward += diff_rotations #[-3*pi, 2*pi]
-        reward = reward/2
+        reward = reward/4
         #print("reward at end of intermediate calculation is: ", reward)
 
-        if collided: #Detected collision
+        if collided or out_of_steps: #Detected collision or steps ran out
             reward = -20
             done = True
 
@@ -305,6 +303,7 @@ class TurtleBot3Env(gym.Env):
 
         # Execute "action"
         self.node.action_publish(action)
+        time.sleep(0.25)
 
         # Resume simulation to take an action
         self.node.resume_sim()
@@ -333,7 +332,7 @@ class TurtleBot3Env(gym.Env):
         # Check for any collision. If we check the ranges of the laserscan and any values = 0.0 appear, we are too close to a wall/obstacle.
         collided = self.collision(obs)
 
-        reward, done = self.calculate_reward(collided, robot_to_goal_orientation, done)
+        reward, done = self.calculate_reward(collided, steps_ended, robot_to_goal_orientation, done)
 
         #print(self.id, " On step: ", self.iterator)
 
