@@ -50,9 +50,6 @@ class ThreadTrainer(Thread):
                     r__ = np.concatenate((r__, r_))
                     a__ = np.concatenate((a__, a_))
                 batch_size += x_.shape[0]
-                print("batch size is: ", batch_size)
             
             if Config.TRAIN_MODELS:
-
-                print("Sending training data to server")
                 self.server.train_model(x__, r__, a__, self.id)

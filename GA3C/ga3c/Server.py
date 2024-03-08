@@ -24,7 +24,6 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import multiprocessing
 from multiprocessing import Queue
 import tensorflow as tf
 import time
@@ -37,7 +36,7 @@ from ThreadDynamicAdjustment import ThreadDynamicAdjustment
 from ThreadPredictor import ThreadPredictor
 from ThreadTrainer import ThreadTrainer
 
-
+from threading import Lock
 class Server:
     def __init__(self):
         self.stats = ProcessStats()
@@ -53,6 +52,8 @@ class Server:
         self.training_step = 0
         self.frame_counter = 0
 
+        self.model_lock = Lock()
+
         self.agents = []
         self.predictors = []
         self.trainers = []
@@ -61,7 +62,7 @@ class Server:
     def add_agent(self):
         self.agents.append(
             ProcessAgent(len(self.agents), self.prediction_q, self.training_q, self.stats.episode_log_q))
-        print("Added agent")
+        time.sleep(5)
         self.agents[-1].start()
 
     def remove_agent(self):
@@ -71,7 +72,6 @@ class Server:
 
     def add_predictor(self):
         self.predictors.append(ThreadPredictor(self, len(self.predictors)))
-        print("added predictor")
         self.predictors[-1].start()
 
     def remove_predictor(self):
@@ -81,7 +81,6 @@ class Server:
 
     def add_trainer(self):
         self.trainers.append(ThreadTrainer(self, len(self.trainers)))
-        print("added trainer")
         self.trainers[-1].start()
 
     def remove_trainer(self):
@@ -90,11 +89,12 @@ class Server:
         self.trainers.pop()
 
     def train_model(self, x_, r_, a_, trainer_id):
-        trainX = tf.Variable(x_, dtype=tf.float32)
-        trainR = tf.Variable(r_, dtype=tf.float32)
-        trainA = tf.Variable(a_, dtype=tf.float32)
-        tensorID = tf.Variable(trainer_id, dtype=tf.int32)
-        self.model.train(trainX, trainR, trainA, tensorID)
+        with self.model_lock:
+            trainX = tf.convert_to_tensor(x_, dtype=tf.float32)
+            trainR = tf.convert_to_tensor(r_, dtype=tf.float32)
+            trainA = tf.convert_to_tensor(a_, dtype=tf.float32)
+            tensorID = tf.convert_to_tensor(trainer_id, dtype=tf.int32)
+            self.model.train(trainX, trainR, trainA, tensorID)
         self.training_step += 1
         self.frame_counter += x_.shape[0]
 
@@ -103,6 +103,14 @@ class Server:
 
         #if Config.TENSORBOARD and self.stats.training_count.value % Config.TENSORBOARD_UPDATE_FREQUENCY == 0:
         #    self.model.log(x_, r_, a_)
+
+    def predict(self, state):
+        with self.model_lock:
+            batch_ = tf.convert_to_tensor(state, dtype=tf.float32)
+            p, v = self.model.predict_p_and_v(batch_)
+            p = p.numpy().tolist()
+            v = v.numpy().tolist()
+        return p, v
 
     def save_model(self):
         self.model.save(episode=self.stats.episode_count.value, policy_value=self.stats.policy_value.value)
@@ -126,7 +134,6 @@ class Server:
 
             # Saving is async - even if we start saving at a given episode, we may save the model at a later episode
             if Config.SAVE_MODELS and self.stats.should_save_model.value > 0:
-                print("Saving model")
                 self.save_model()
                 self.stats.should_save_model.value = 0
 

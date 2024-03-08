@@ -34,7 +34,6 @@ if sys.version_info < (3,0):
 
 from Config import Config
 from Server import Server
-import multiprocessing
 
 # Parse arguments
 for i in range(1, len(sys.argv)):
@@ -64,5 +63,5 @@ except:
 # Start main program
 if __name__ == '__main__':
 
-    multiprocessing.set_start_method('spawn', force=True)
+    #multiprocessing.set_start_method('spawn', force=True)
     Server().main()

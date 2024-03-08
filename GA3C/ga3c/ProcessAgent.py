@@ -27,7 +27,7 @@
 from datetime import datetime
 from multiprocessing import Process, Queue, Value
 
-import tensorflow as tf
+#import tensorflow as tf
 
 import numpy as np
 import time
@@ -78,8 +78,7 @@ class ProcessAgent(Process):
 
         # wait for the prediction to come back
         p, v = self.wait_q.get()
-        val = v.numpy().item()
-        return p, val
+        return p, v
 
     def select_action(self, prediction):
         if Config.PLAY_MODE:
@@ -103,14 +102,14 @@ class ProcessAgent(Process):
         while not done:
             # very first few frames
             if env.current_state is None:
-                print("Agent ", self.id, " Empty state, filling frame buffer")
+                #print("Agent ", self.id, " Empty state, filling frame buffer")
                 env.step(None)  # NOOP, used to fill the first 4 frames of buffer
                 continue
 
             prediction, value = self.predict(env.current_state)
             action = self.select_action(prediction)
             reward, done = env.step(action)
-            print("Agent ",self.id, "Action was: ", action, "Reward was: ", reward)
+            #print("Agent ",self.id, "Action was: ", action, "Reward was: ", reward)
             reward_sum += reward
 
             if Config.MAX_STEP_ITERATION < step_iteration:
@@ -137,14 +136,14 @@ class ProcessAgent(Process):
             time_count += 1
 
     def run(self):
-        global tf
-        # randomly sleep up to 20 seconds. helps agents boot smoothly.
-        time.sleep(np.random.rand()* 20)
+        #global tf
+        # randomly sleep up to 1 second. helps agents boot smoothly.
+        time.sleep(np.random.rand()* 1)
         np.random.seed(np.int32(time.time() % 1 * 1000 + self.id * 10))
 
         env = Environment(self.id)
         print("waiting for env to intialize")
-        time.sleep(10)
+        time.sleep(15)
 
         while self.exit_flag.value == 0:
             total_reward = 0

@@ -27,7 +27,6 @@
 from threading import Thread
 
 import numpy as np
-import tensorflow as tf
 
 from Config import Config
 
@@ -55,8 +54,9 @@ class ThreadPredictor(Thread):
                 size += 1
 
             batch = states[:size]
-            predbatch = tf.Variable(batch)
-            p, v = self.server.model.predict_p_and_v(predbatch)
+            #predbatch = tf.Variable(batch)
+            #p, v = self.server.model.predict_p_and_v(predbatch)
+            p, v = self.server.predict(batch)
 
             for i in range(size):
                 if ids[i] < len(self.server.agents):
