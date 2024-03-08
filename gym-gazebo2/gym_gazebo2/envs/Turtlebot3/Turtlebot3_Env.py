@@ -183,7 +183,7 @@ class TurtleBot3Env(gym.Env):
     def collision(self, obs):
         # Detect if there is a collision, return Boolean
         if min(obs) == 0.0:
-            print("\n++++++++++++++++++COLLISION DETECTED+++++++++++++++++++++++\n")
+            #print("\n++++++++++++++++++COLLISION DETECTED+++++++++++++++++++++++\n")
 
             self.collided += 1
             self.node.action_publish(None)
@@ -191,7 +191,7 @@ class TurtleBot3Env(gym.Env):
         else:
             return False
         
-    def calculate_reward(self, collided, out_of_steps, robot_to_goal_orientation, done):
+    def calculate_reward(self, collided, robot_to_goal_orientation, done):
         #Calculate Rewards. -20 for collision, 20 for reaching goal, small intermediate rewards for being closer to goal(by distance and orientation)
         reward = 0.0
 
@@ -245,19 +245,18 @@ class TurtleBot3Env(gym.Env):
         reward += dist_to_end_diff #[-6, 6]
         reward += (3*rotations_cos_sum) #[-3, 3]
         reward += diff_rotations #[-3*pi, 2*pi]
-        reward = reward/4
         #print("reward at end of intermediate calculation is: ", reward)
 
-        if collided or out_of_steps: #Detected collision or steps ran out
+        if collided: #Detected collision
             reward = -20
             done = True
 
         # check that robot reached goal
         elif self.currentDistance <= 0.5:
                 reward = 20
-                print("+++++++++++++++++++++++++++++++++++++++++++++++++++++")
-                print("++++++++++++++++++GOAL REACHED+++++++++++++++++++++++")
-                print("+++++++++++++++++++++++++++++++++++++++++++++++++++++")
+                #print("+++++++++++++++++++++++++++++++++++++++++++++++++++++")
+                #print("++++++++++++++++++GOAL REACHED+++++++++++++++++++++++")
+                #print("+++++++++++++++++++++++++++++++++++++++++++++++++++++")
 
                 # pick a new goal
                 newIndex = np.random.randint(0, len(self.world[self.worldname]['spawn_point']))
@@ -268,7 +267,7 @@ class TurtleBot3Env(gym.Env):
                         newTarget = np.asarray(self.world[self.worldname]['target_position'][newIndex])
 
                 self.targetPosition = newTarget
-                print(self.id, "New goal position is: ", self.targetPosition)
+                #print(self.id, "New goal position is: ", self.targetPosition)
 
         return reward, done
     
@@ -303,7 +302,7 @@ class TurtleBot3Env(gym.Env):
 
         # Execute "action"
         self.node.action_publish(action)
-        time.sleep(0.25)
+        time.sleep(0.05)
 
         # Resume simulation to take an action
         self.node.resume_sim()
@@ -332,7 +331,7 @@ class TurtleBot3Env(gym.Env):
         # Check for any collision. If we check the ranges of the laserscan and any values = 0.0 appear, we are too close to a wall/obstacle.
         collided = self.collision(obs)
 
-        reward, done = self.calculate_reward(collided, steps_ended, robot_to_goal_orientation, done)
+        reward, done = self.calculate_reward(collided, robot_to_goal_orientation, done)
 
         #print(self.id, " On step: ", self.iterator)
 
@@ -371,7 +370,7 @@ class TurtleBot3Env(gym.Env):
         # reset simulation
         self.node.reset_sim()
 
-        print(self.id ," Reset successfully")
+        #print(self.id ," Reset successfully")
         #self.ros_clock = rclpy.clock.Clock().now().nanoseconds
 
         # Move model to a new spot after collision
