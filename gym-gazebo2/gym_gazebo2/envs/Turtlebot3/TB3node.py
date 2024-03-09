@@ -8,6 +8,8 @@ from geometry_msgs.msg import Twist
 from gazebo_msgs.msg import ModelStates, EntityState
 from gazebo_msgs.srv import SetEntityState
 
+import time
+
 class TurtleBot3_Node(Node):
 
     observation_msg = None
@@ -44,6 +46,9 @@ class TurtleBot3_Node(Node):
         """
         Callback method for the subscriber of '/gazebo/model_states' topic
         """
+        while 'waffle_depth' not in message.name:
+            print(self.env_id,' waiting for waffle_depth model to be spawned\n')
+            time.sleep(10)
         index = message.name.index('waffle_depth')
         pose = message.pose[index]
         self.positiion_msg = pose.position
