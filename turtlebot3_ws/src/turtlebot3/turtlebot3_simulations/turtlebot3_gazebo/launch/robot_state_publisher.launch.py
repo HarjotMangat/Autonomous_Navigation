@@ -56,5 +56,6 @@ def generate_launch_description():
                 'use_sim_time': use_sim_time,
                 'robot_description': robot_desc
             }],
+            arguments=['--ros-args', '--log-level', 'ERROR']
         ),
     ])
