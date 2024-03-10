@@ -3,6 +3,10 @@
 Added an updated Tensorflow2 model using Keras for the network architecture.
 Adjusted configs and other small pieces of code to resemble the implementation of the paper
 
+After building the C++ 2D sim with `bash build.sh` or `bash build_avx.sh`(if your processor supports avx instructions) the GA3C algorithm can be trained on the C++ sim with `sh _train_Csim.sh` or trained on the Gazebo sim with `sh _train_gz.sh`(Gazebo sim is much slower). 
+
+The trained model can be used on either the Gazebo sim and the C++ sim like: `sh _play_gz.sh LOAD_CHECKPOINT=True LOAD_EPISODE=xxxx` or `sh _play_Csim.sh LOAD_CHECKPOINT=True LOAD_EPISODE=xxxx` where xxxx can be any episode number from the checkpoints folder.
+
 ---------------------------------------------------------------------------------------------
 
 Original README below
