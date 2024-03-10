@@ -146,7 +146,7 @@ The following instructions are from the GA3C readme
 
 Run `sh _clean.sh` first, and then `sh _train_gz.sh` or `sh _train_Csim.sh` depending on if you want to train on Gazebo sim or C++ sim. The Gazebo sim is slower, but uses realisitc ROS2 functionality, the C++ sim is lightweight and trains very quickly. The script `_clean.sh` cleans the checkpoints folder, which contains the network models saved during the training process, as well as removing `results.txt`, which is a log of scores achieved during training.
 
-`sh _train.sh` launches the training procedure, following the parameters in `Config.py`. You can modify the training parameters directly in `Config.py`, or pass them as arguements to `_train.sh`. E.g., launching `sh _train_gz.sh AGENTS=10 TRAINERS=2 PREDICTORS=2` or `sh _train_Csim.sh AGENTS=10 TRAINERS=2 PREDICTORS=2` overwrites the starting values of the number of agents, trainers, and predictors in `Config.py` with the ones passed as arguments.
+`sh _train_gz.sh` or `sh _train_Csim.sh` launches the training procedure, following the parameters in `Config.py`. You can modify the training parameters directly in `Config.py`, or pass them as arguements to `_train_gz.sh` or `_train_Csim.sh`. E.g., launching `sh _train_gz.sh AGENTS=10 TRAINERS=2 PREDICTORS=2` or `sh _train_Csim.sh AGENTS=10 TRAINERS=2 PREDICTORS=2` overwrites the starting values of the number of agents, trainers, and predictors in `Config.py` with the ones passed as arguments.
 
 To stop the training procedure, adjust `EPISODES` in `Config.py` properly, or simply use ctrl + c.
 
