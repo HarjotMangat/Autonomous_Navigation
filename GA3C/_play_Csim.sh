@@ -1,0 +1,1 @@
+python3 ga3c_Csim/GA3C.py PLAY_MODE=True
