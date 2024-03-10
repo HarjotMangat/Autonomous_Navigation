@@ -128,17 +128,25 @@ There are two options for the base OS: Windows using WSL2 or Ubuntu 22.04
         
         `echo “export TURTLEBOT3_MODEL=waffle_depth” >> ~/.bashrc`
 
+    * Build C++ Sim:
+      
+        install dependencies: `sudo apt-get install libeigen3-dev libboost-python-dev libboost-system-dev python3-dev inkscape python3-pip gnuplot-qt`
+      
+        change to GA3C directory `cd GA3C/`
+
+        build sim with `bash build.sh` (or `bash build_avx.sh` if the processor supports AVX)
+
 # Usage
 
-The interaction is done through the shell scripts in GA3C/ga3c directory.
+The interaction is done through the shell scripts in GA3C directory.
 
 The following instructions are from the GA3C readme
 
 ## How to Train a model from Scratch? ##
 
-Run `sh _clean.sh` first, and then `sh _train.sh`. The script `_clean.sh` cleans the checkpoints folder, which contains the network models saved during the training process, as well as removing `results.txt`, which is a log of scores achieved during training.
+Run `sh _clean.sh` first, and then `sh _train_gz.sh` or `sh _train_Csim.sh` depending on if you want to train on Gazebo sim or C++ sim. The Gazebo sim is slower, but uses realisitc ROS2 functionality, the C++ sim is lightweight and trains very quickly. The script `_clean.sh` cleans the checkpoints folder, which contains the network models saved during the training process, as well as removing `results.txt`, which is a log of scores achieved during training.
 
-`sh _train.sh` launches the training procedure, following the parameters in `Config.py`. You can modify the training parameters directly in `Config.py`, or pass them as arguements to `_train.sh`. E.g., launching `sh _train.sh AGENTS=10 TRAINERS=2 PREDICTORS=2` overwrites the starting values of the number of agents, trainers, and predictors in `Config.py` with the ones passed as arguments.
+`sh _train.sh` launches the training procedure, following the parameters in `Config.py`. You can modify the training parameters directly in `Config.py`, or pass them as arguements to `_train.sh`. E.g., launching `sh _train_gz.sh AGENTS=10 TRAINERS=2 PREDICTORS=2` or `sh _train_Csim.sh AGENTS=10 TRAINERS=2 PREDICTORS=2` overwrites the starting values of the number of agents, trainers, and predictors in `Config.py` with the ones passed as arguments.
 
 To stop the training procedure, adjust `EPISODES` in `Config.py` properly, or simply use ctrl + c.
 
@@ -146,12 +154,12 @@ To stop the training procedure, adjust `EPISODES` in `Config.py` properly, or si
 
 If you want to continue training a model, set `LOAD_CHECKPOINTS=True` in `Config.py`, and set `LOAD_EPISODE` to the episode number you want to load. Be sure that the corresponding model has been saved in the checkpoints folder.
 
-E.g. `sh _train.sh LOAD_CHECKPOINTS=True LOAD_EPISODE=300` would load the model checkpoint at episode 300 and continue training.
+E.g. `sh _train_gz.sh LOAD_CHECKPOINTS=True LOAD_EPISODE=300` or `sh_train_Csim.sh LOADCHECKPOINTS=True LOAD_EPISODE=300` would load the model checkpoint at episode 300 and continue training.
 
 ## How to Play a game with a trained agent? ##
 
-Run `_play.sh LOAD_CHECKPOINT=True LOAD_EPISODE=300` to load the model checkpoint at episode 300 to play with the environment.
+Run `_play_gz.sh LOAD_CHECKPOINT=True LOAD_EPISODE=300` or `_play_Csim.sh LOAD_CHECKPOINT=True LOAD_EPISODE=300` to load the model checkpoint at episode 300 to play with the environment.
 
 ## Graph rewards per episode ##
 
-Use `python3 print_results.py` to plot the rewards per episode logged in `results.txt` from the training.
+Use `python3 results.py` to plot the rewards per episode logged in `results.txt` from the training.
